@@ -68,7 +68,6 @@ public class PropietariosController : Controller
         return View(propietario); 
     }
 
-    // POST: Propietarios/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
     public ActionResult Edit(Propietario propietario)
@@ -81,7 +80,5 @@ public class PropietariosController : Controller
         }
         return View(propietario);
     }
-
-
 
 }

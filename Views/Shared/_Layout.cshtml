@@ -9,40 +9,43 @@
     <link rel="stylesheet" href="~/_Net.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <!-- Header simple -->
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <div class="container">
-                <a class="navbar-brand" asp-controller="Home" asp-action="Index">Inicio</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"></li>
-                            <a class="nav-link" asp-controller="Inquilinos" asp-action="Index">Inquilinos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Propietarios" asp-action="Index">Propietarios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Inmuebles" asp-action="Index">Inmuebles</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Alquileres" asp-action="Index">Alquileres</a>
-                        </li>
-                    </ul>
-                </div>
+   <header>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">Inicio</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Inquilinos" asp-action="Index">Inquilinos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Propietarios" asp-action="Index">Propietarios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Inmuebles" asp-action="Index">Inmuebles</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Contratos" asp-action="Index">Contratos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Pagos" asp-action="Index">Pagos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="About">Detalles</a>
+                    </li>
+                </ul>
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
+</header>
 
-    <!-- Main content -->
     <main class="container mt-4">
         @RenderBody()
     </main>
 
-    <!-- Footer simple -->
     <footer class="bg-light text-center py-3 mt-4">
         <span>&copy; @DateTime.Now.Year Universidad de La Punta</span>
     </footer>
