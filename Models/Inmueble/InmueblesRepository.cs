@@ -186,4 +186,54 @@ public class InmueblesRepository : RepositoryBase
         return res;
     }
 
+
+    public List<Inmueble> ObtenerTodosOPorFiltro(int? idPropietario = null, bool? disponible = null)
+    {
+        var lista = new List<Inmueble>();
+
+        using (var connection = new MySqlConnection(ConectionString))
+        {
+            var sql = "SELECT * FROM Inmuebles WHERE 1=1";
+
+            if (idPropietario.HasValue)
+                sql += " AND IdPropietario = @idPropietario";
+
+            if (disponible.HasValue)
+                sql += " AND Disponible = @disponible";
+
+            using (var command = new MySqlCommand(sql, connection))
+            {
+                if (idPropietario.HasValue)
+                    command.Parameters.AddWithValue("@idPropietario", idPropietario.Value);
+
+                if (disponible.HasValue)
+                    command.Parameters.AddWithValue("@disponible", disponible.Value);
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var inmueble = new Inmueble
+                        {
+                            IdInmueble = reader.GetInt32("IdInmueble"),
+                            Direccion = reader.GetString("Direccion"),
+                            Tipo = reader.GetString("Tipo"),
+                            Uso = reader.GetString("Uso"),
+                            Ambientes = reader.GetInt32("Ambientes"),
+                            Latitud = reader.GetDecimal("Latitud"),
+                            Longitud = reader.GetDecimal("Longitud"),
+                            IdPropietario = reader.GetInt32("IdPropietario"),
+                            Disponible = reader.GetBoolean("Disponible")
+                        };
+                        lista.Add(inmueble);
+                    }
+                }
+                connection.Close();
+            }
+        }
+
+        return lista;
+    }
 }
+

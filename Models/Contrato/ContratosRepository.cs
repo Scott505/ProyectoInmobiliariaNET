@@ -50,22 +50,39 @@ public class ContratosRepository : RepositoryBase
         return contrato;
     }
 
-    public List<Contrato> ObtenerTodos()
+    public List<Contrato> ObtenerTodosOPorFiltros(int? dias = null, bool? vigente = null)
     {
         List<Contrato> contratos = new List<Contrato>();
         using (var connection = new MySqlConnection(ConectionString))
         {
             string sql = $@"SELECT {nameof(Contrato.IdContrato)},
-                                   {nameof(Contrato.IdInquilino)},
-                                   {nameof(Contrato.IdInmueble)},
-                                   {nameof(Contrato.FechaInicio)},
-                                   {nameof(Contrato.FechaFin)},
-                                   {nameof(Contrato.ValorMensual)},
-                                   {nameof(Contrato.Vigente)}
-                            FROM Contratos;";
+                               {nameof(Contrato.IdInquilino)},
+                               {nameof(Contrato.IdInmueble)},
+                               {nameof(Contrato.FechaInicio)},
+                               {nameof(Contrato.FechaFin)},
+                               {nameof(Contrato.ValorMensual)},
+                               {nameof(Contrato.Vigente)}
+                        FROM Contratos
+                        WHERE 1=1";
+
+            if (dias.HasValue)
+            {
+                sql += " AND DATEDIFF(FechaFin, CURDATE()) <= @dias";
+            }
+
+            if (vigente.HasValue)
+            {
+                sql += " AND Vigente = @vigente";
+            }
 
             using (var command = new MySqlCommand(sql, connection))
             {
+                if (dias.HasValue)
+                    command.Parameters.AddWithValue("@dias", dias.Value);
+
+                if (vigente.HasValue)
+                    command.Parameters.AddWithValue("@vigente", vigente.Value);
+
                 connection.Open();
                 var reader = command.ExecuteReader();
                 while (reader.Read())

@@ -98,8 +98,7 @@ public class PagosController : Controller
 
     private void CargarDropdowns(Pago pago = null)
     {
-        var contratos = new ContratosRepository(config).ObtenerTodos()
-            .Where(c => c.Vigente) // solo contratos vigentes
+        var contratos = new ContratosRepository(config).ObtenerTodosOPorFiltros()
             .Select(c => new
             {
                 Id = c.IdContrato,

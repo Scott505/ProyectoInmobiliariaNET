@@ -10,6 +10,26 @@
     </a>
 </div>
 
+<form method="get" class="mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col-auto">
+            <label for="dias" class="col-form-label">Filtrar por vencimiento</label>
+        </div>
+        <div class="col-auto">
+            <select name="dias" class="form-select" asp-items="ViewBag.DiasOpciones" onchange="this.form.submit()">
+                <option value="">-- Todos --</option>
+            </select>
+        </div>
+        <div class="col-auto form-check">
+            <input type="checkbox" class="form-check-input" id="vigente" name="vigente"
+                   value="true" @(ViewBag.VigenteSeleccionado == true ? "checked" : "")
+                   onchange="this.form.submit()" />
+            <label class="form-check-label" for="vigente">Solo vigentes</label>
+        </div>
+    </div>
+</form>
+
+
 <table class="table">
     <thead>
         <tr>

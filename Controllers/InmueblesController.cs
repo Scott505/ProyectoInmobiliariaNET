@@ -9,7 +9,7 @@ public class InmueblesController : Controller
 {
     private readonly InmueblesRepository repository;
     private readonly IConfiguration config;
-    public enum TipoInmueble { CASA, DEPARTAMENTO, LOCAL, DEPOSITO}
+    public enum TipoInmueble { CASA, DEPARTAMENTO, LOCAL, DEPOSITO }
     public enum UsoInmueble { RESIENCIAL, COMERCIAL }
 
     public InmueblesController(IConfiguration config)
@@ -18,12 +18,15 @@ public class InmueblesController : Controller
         this.config = config;
     }
 
-    public ActionResult Index()
-    {
-        var lista = repository.ObtenerTodos();
-        return View(lista);
-    }
+   public ActionResult Index(bool? disponible, int? idPropietario)
+{
+    var lista = repository.ObtenerTodosOPorFiltro(idPropietario, disponible);
 
+    CargarPropietariosDropdown(idPropietario);
+    ViewBag.DisponibleSeleccionado = disponible;
+
+    return View(lista);
+    }
     public ActionResult Create()
     {
         CargarDropdowns();
@@ -109,5 +112,14 @@ public class InmueblesController : Controller
             .Select(u => new SelectListItem { Value = u.ToString(), Text = u.ToString() })
             .ToList();
     }
+
+    private void CargarPropietariosDropdown(int? propietarioSeleccionado = null)
+{
+    var propietarios = new PropietariosRepository(config).ObtenerTodos()
+        .Select(p => new { Id = p.IdPropietario, NombreCompleto = p.Nombre + " " + p.Apellido })
+        .ToList();
+
+    ViewBag.Propietarios = new SelectList(propietarios, "Id", "NombreCompleto", propietarioSeleccionado);
+}
 
 }

@@ -16,11 +16,23 @@ public class ContratosController : Controller
         this.config = config;
     }
 
-    public ActionResult Index()
-    {
-        var lista = repository.ObtenerTodos();
-        return View(lista);
-    }
+    public ActionResult Index(int? dias, bool? vigente)
+{
+    var lista = repository.ObtenerTodosOPorFiltros(dias, vigente);
+
+    ViewBag.DiasOpciones = new SelectList(new[]
+     {
+        new { Value = "30", Text = "30 días" },
+        new { Value = "60", Text = "60 días" },
+        new { Value = "90", Text = "90 días" }
+    }, "Value", "Text", dias?.ToString());
+
+    ViewBag.DiasSeleccionado = dias;
+    ViewBag.VigenteSeleccionado = vigente;
+
+    return View(lista);
+}
+
 
     public ActionResult Create()
     {
@@ -97,16 +109,15 @@ public class ContratosController : Controller
     }
 
     private void CargarDropdowns(Contrato contrato = null)
-{
-    var inquilinos = new InquilinosRepository(config).ObtenerTodos()
-        .Select(i => new { Id = i.IdInquilino, NombreCompleto = i.Nombre + " " + i.Apellido })
-        .ToList();
-    ViewBag.Inquilinos = new SelectList(inquilinos, "Id", "NombreCompleto", contrato?.IdInquilino);
+    {
+        var inquilinos = new InquilinosRepository(config).ObtenerTodos()
+            .Select(i => new { Id = i.IdInquilino, NombreCompleto = i.Nombre + " " + i.Apellido })
+            .ToList();
+        ViewBag.Inquilinos = new SelectList(inquilinos, "Id", "NombreCompleto", contrato?.IdInquilino);
 
-    var inmuebles = new InmueblesRepository(config).ObtenerTodos()
-        .Where(i => i.Disponible)
-        .ToList();
-    ViewBag.Inmuebles = new SelectList(inmuebles, "IdInmueble", "Direccion", contrato?.IdInmueble);
-}
+        var inmuebles = new InmueblesRepository(config).ObtenerTodosOPorFiltro()
+            .ToList();
+        ViewBag.Inmuebles = new SelectList(inmuebles, "IdInmueble", "Direccion", contrato?.IdInmueble);
+    }
 
 }
