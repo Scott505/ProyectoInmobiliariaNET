@@ -55,7 +55,6 @@ namespace _Net.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-        // GET: /Usuarios
         // Solo Administradores pueden ver listado completo
         public IActionResult Index()
         {
@@ -67,7 +66,6 @@ namespace _Net.Controllers
             return View(usuarios);
         }
 
-        // GET: /Usuarios/Crear
         // Solo Administradores
         [HttpGet]
         public IActionResult Crear()
@@ -79,7 +77,6 @@ namespace _Net.Controllers
             return View(new Usuario());
         }
 
-        // POST: /Usuarios/Crear
         // Solo Administradores
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -108,7 +105,6 @@ namespace _Net.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /Usuarios/Editar/5
         // Admin puede editar cualquiera, Empleado solo su propio perfil
         [HttpGet]
         public IActionResult Editar(int id)
@@ -125,7 +121,6 @@ namespace _Net.Controllers
             return View(u);
         }
 
-        // POST: /Usuarios/Editar
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Editar(Usuario usuario, string NuevoPassword)
@@ -164,7 +159,6 @@ namespace _Net.Controllers
             return RedirectToAction(nameof(Editar), new { id = usuario.IdUsuario });
         }
 
-        // GET: /Usuarios/Detalles/5
         [HttpGet]
         public IActionResult Detalles(int id)
         {
@@ -179,7 +173,6 @@ namespace _Net.Controllers
             return View(u);
         }
 
-        // POST: /Usuarios/Baja/5
         // Solo Administradores pueden dar de baja (baja lógica)
         [HttpPost]
         [ValidateAntiForgeryToken]
