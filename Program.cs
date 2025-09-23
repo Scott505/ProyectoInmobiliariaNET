@@ -3,6 +3,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+
+// ===== Agregado para sesiones =====
+builder.Services.AddDistributedMemoryCache(); // Cache en memoria para sesiones
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tiempo de expiración de la sesión
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -16,14 +26,21 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseSession(); //habilitar el uso de sesiones
+
 app.UseAuthorization();
 
 app.MapStaticAssets();
 
-app.MapControllerRoute(
+/*app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    .WithStaticAssets();*/
 
+/*redirecciona la pagina de inicio directamente al login*/
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Usuarios}/{action=Login}/{id?}")
+    .WithStaticAssets();
 
 app.Run();

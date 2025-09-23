@@ -1,3 +1,8 @@
 bin/
 obj/
 appsettings.Development.json
+Views/Usuarios/Create.cshtml
+Views/Usuarios/Delete.cshtml
+Views/Usuarios/Edit.cshtml
+Views/Usuarios/Index.cshtml
+appsettings.json
