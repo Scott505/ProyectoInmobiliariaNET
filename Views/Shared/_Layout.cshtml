@@ -23,34 +23,62 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Inquilinos" asp-action="Index">Inquilinos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Propietarios" asp-action="Index">Propietarios</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Inmuebles" asp-action="Index">Inmuebles</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Contratos" asp-action="Index">Contratos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Pagos" asp-action="Index">Pagos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="About">Detalles</a>
-                        </li>
                         @{
                             var rol = HttpContextAccessor.HttpContext?.Session.GetString("UsuarioRol")
-                            ?? HttpContextAccessor.HttpContext?.Request.Cookies["UsuarioRol"];
+                                ?? HttpContextAccessor.HttpContext?.Request.Cookies["UsuarioRol"];
                             var nombre = HttpContextAccessor.HttpContext?.Session.GetString("UsuarioNombre")
-                            ?? HttpContextAccessor.HttpContext?.Request.Cookies["UsuarioNombre"];
+                                ?? HttpContextAccessor.HttpContext?.Request.Cookies["UsuarioNombre"];
                             var idUsuario = HttpContextAccessor.HttpContext?.Session.GetInt32("UsuarioId")
-                            ?? (int.TryParse(HttpContextAccessor.HttpContext?.Request.Cookies["UsuarioId"], out var cid) ?
-                            cid : 0);
+                                ?? (int.TryParse(HttpContextAccessor.HttpContext?.Request.Cookies["UsuarioId"], out var cid) ? cid : 0);
+
+                            var isLoggedIn = idUsuario > 0;
                         }
 
+                        @* Links protegidos *@
+                        @if (isLoggedIn)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Inquilinos" asp-action="Index">Inquilinos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Propietarios" asp-action="Index">Propietarios</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Inmuebles" asp-action="Index">Inmuebles</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Contratos" asp-action="Index">Contratos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Pagos" asp-action="Index">Pagos</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="About">Detalles</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Inquilinos</span>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Propietarios</span>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Inmuebles</span>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Contratos</span>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Pagos</span>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Detalles</span>
+                            </li>
+                        }
+
+                        @* Perfil y usuarios *@
                         @if (!string.IsNullOrEmpty(rol) && rol == "Administrador")
                         {
                             <li class="nav-item">
@@ -60,16 +88,14 @@
                         else if (!string.IsNullOrEmpty(rol) && rol == "Empleado")
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Usuarios" asp-action="Edit" asp-route-id="@idUsuario">Mi
-                                    Perfil</a>
+                                <a class="nav-link" asp-controller="Usuarios" asp-action="Edit" asp-route-id="@idUsuario">Mi Perfil</a>
                             </li>
                         }
 
                         @if (!string.IsNullOrEmpty(rol))
                         {
                             <li class="nav-item">
-                                <span class="navbar-text me-2">Hola, @(!string.IsNullOrEmpty(nombre) ? nombre :
-                                                                    "Usuario")</span>
+                                <span class="navbar-text me-2">Hola, @(!string.IsNullOrEmpty(nombre) ? nombre : "Usuario")</span>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-danger" asp-controller="Usuarios" asp-action="Logout">Salir</a>
@@ -81,8 +107,6 @@
                                 <a class="nav-link" asp-controller="Usuarios" asp-action="Login">Login</a>
                             </li>
                         }
-
-
                     </ul>
                 </div>
             </div>
