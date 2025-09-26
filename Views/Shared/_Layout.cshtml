@@ -52,35 +52,15 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Pagos" asp-action="Index">Pagos</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="About">Detalles</a>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Inquilinos</span>
-                            </li>
-                            <li class="nav-item">
-                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Propietarios</span>
-                            </li>
-                            <li class="nav-item">
-                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Inmuebles</span>
-                            </li>
-                            <li class="nav-item">
-                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Contratos</span>
-                            </li>
-                            <li class="nav-item">
-                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Pagos</span>
-                            </li>
-                            <li class="nav-item">
-                                <span class="nav-link text-muted" title="Inicie sesión para acceder">Detalles</span>
-                            </li>
                         }
 
                         @* Perfil y usuarios *@
                         @if (!string.IsNullOrEmpty(rol) && rol == "Administrador")
                         {
+                            
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="About">Auditoria</a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
                             </li>
