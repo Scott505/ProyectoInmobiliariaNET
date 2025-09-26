@@ -50,26 +50,29 @@ public class ContratosRepository : RepositoryBase
         return contrato;
     }
 
-    public List<Contrato> ObtenerTodosOPorFiltros(int? dias = null, bool? vigente = null)
+    public List<Contrato> ObtenerTodosOPorFiltros(int? dias = null, bool? vigente = null, int? idInquilino = null)
     {
         List<Contrato> contratos = new List<Contrato>();
         using (var connection = new MySqlConnection(ConectionString))
         {
             string sql = @"
-            SELECT c.IdContrato, c.IdInquilino, c.IdInmueble, c.FechaInicio, c.FechaFin, 
-                   c.ValorMensual, c.Vigente,
-                   i.Nombre AS InquilinoNombre, i.Apellido AS InquilinoApellido,
-                   inm.Direccion AS InmuebleDireccion
-            FROM Contratos c
-            INNER JOIN Inquilinos i ON c.IdInquilino = i.IdInquilino
-            INNER JOIN Inmuebles inm ON c.IdInmueble = inm.IdInmueble
-            WHERE 1=1";
+        SELECT c.IdContrato, c.IdInquilino, c.IdInmueble, c.FechaInicio, c.FechaFin, 
+               c.ValorMensual, c.Vigente,
+               i.Nombre AS InquilinoNombre, i.Apellido AS InquilinoApellido,
+               inm.Direccion AS InmuebleDireccion
+        FROM Contratos c
+        INNER JOIN Inquilinos i ON c.IdInquilino = i.IdInquilino
+        INNER JOIN Inmuebles inm ON c.IdInmueble = inm.IdInmueble
+        WHERE 1=1";
 
             if (dias.HasValue)
                 sql += " AND DATEDIFF(c.FechaFin, CURDATE()) <= @dias";
 
             if (vigente.HasValue)
                 sql += " AND c.Vigente = @vigente";
+
+            if (idInquilino.HasValue)
+                sql += " AND c.IdInquilino = @idInquilino";
 
             using (var command = new MySqlCommand(sql, connection))
             {
@@ -78,6 +81,9 @@ public class ContratosRepository : RepositoryBase
 
                 if (vigente.HasValue)
                     command.Parameters.AddWithValue("@vigente", vigente.Value);
+
+                if (idInquilino.HasValue)
+                    command.Parameters.AddWithValue("@idInquilino", idInquilino.Value);
 
                 connection.Open();
                 var reader = command.ExecuteReader();
@@ -102,7 +108,6 @@ public class ContratosRepository : RepositoryBase
         }
         return contratos;
     }
-
 
     public int Alta(Contrato contrato)
     {

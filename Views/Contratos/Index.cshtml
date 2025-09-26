@@ -20,36 +20,46 @@
                 <option value="">-- Todos --</option>
             </select>
         </div>
+
+        <div class="col-auto">
+            <label for="idInquilino" class="col-form-label">Filtrar por inquilino</label>
+        </div>
+        <div class="col-auto">
+            <select name="idInquilino" class="form-select" asp-items="ViewBag.Inquilinos" onchange="this.form.submit()">
+                <option value="">-- Todos --</option>
+            </select>
+        </div>
+
         <div class="col-auto form-check">
-            <input type="checkbox" class="form-check-input" id="vigente" name="vigente"
-                   value="true" @(ViewBag.VigenteSeleccionado == true ? "checked" : "")
-                   onchange="this.form.submit()" />
+            <input type="checkbox" class="form-check-input" id="vigente" name="vigente" value="true"
+                @(ViewBag.VigenteSeleccionado == true ? "checked" : "") onchange="this.form.submit()" />
             <label class="form-check-label" for="vigente">Solo vigentes</label>
         </div>
     </div>
 </form>
 
 
+
 <table class="table">
     <thead>
-    <tr>
-        <th>@Html.DisplayNameFor(model => model.IdContrato)</th>
-        <th>Inquilino</th>
-        <th>Inmueble</th>
-        <th>@Html.DisplayNameFor(model => model.FechaInicio)</th>
-        <th>@Html.DisplayNameFor(model => model.FechaFin)</th>
-        <th>@Html.DisplayNameFor(model => model.ValorMensual)</th>
-        <th>@Html.DisplayNameFor(model => model.Vigente)</th>
-        <th>Acciones</th>
-    </tr>
-</thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.IdContrato)</th>
+            <th>Inquilino</th>
+            <th>Inmueble</th>
+            <th>@Html.DisplayNameFor(model => model.FechaInicio)</th>
+            <th>@Html.DisplayNameFor(model => model.FechaFin)</th>
+            <th>@Html.DisplayNameFor(model => model.ValorMensual)</th>
+            <th>@Html.DisplayNameFor(model => model.Vigente)</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
 
     <tbody>
         @foreach (var contrato in Model)
         {
             <tr>
                 <td>@contrato.IdContrato</td>
-                <td>@contrato.InquilinoNombreCompleto</td> 
+                <td>@contrato.InquilinoNombreCompleto</td>
                 <td>@contrato.InmuebleDireccion</td>
                 <td>@contrato.FechaInicio.ToShortDateString()</td>
                 <td>@contrato.FechaFin.ToShortDateString()</td>

@@ -40,8 +40,8 @@
                         <a class="btn btn-danger" asp-action="Eliminar" asp-route-id="@Inquilino.IdInquilino" title="Eliminar">
                             Eliminar
                         </a>
-                        <a class="btn btn-secondary" asp-action="PorInquilino" asp-controller="Inmuebles" asp-route-id="@Inquilino.IdInquilino" title="Mis Propiedades">
-                            Mis Propiedades
+                        <a class="btn btn-secondary" asp-controller="Contratos" asp-action="Index" asp-route-idInquilino="@Inquilino.IdInquilino" title="Mis Alquileres">
+                            Mis Alquileres
                         </a>
                     </div>
                 </td>

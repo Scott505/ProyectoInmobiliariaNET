@@ -16,23 +16,29 @@ public class ContratosController : Controller
         this.config = config;
     }
 
-    public ActionResult Index(int? dias, bool? vigente)
-{
-    var lista = repository.ObtenerTodosOPorFiltros(dias, vigente);
+    public ActionResult Index(int? dias, bool? vigente, int? idInquilino)
+    {
+        var lista = repository.ObtenerTodosOPorFiltros(dias, vigente, idInquilino);
 
-    ViewBag.DiasOpciones = new SelectList(new[]
-     {
+        ViewBag.DiasOpciones = new SelectList(new[]
+        {
         new { Value = "30", Text = "30 días" },
         new { Value = "60", Text = "60 días" },
         new { Value = "90", Text = "90 días" }
     }, "Value", "Text", dias?.ToString());
 
-    ViewBag.DiasSeleccionado = dias;
-    ViewBag.VigenteSeleccionado = vigente;
+        // Dropdown de inquilinos
+        var inquilinos = new InquilinosRepository(config).ObtenerTodos()
+            .Select(i => new { i.IdInquilino, NombreCompleto = i.Nombre + " " + i.Apellido })
+            .ToList();
+        ViewBag.Inquilinos = new SelectList(inquilinos, "IdInquilino", "NombreCompleto", idInquilino);
 
-    return View(lista);
-}
+        ViewBag.DiasSeleccionado = dias;
+        ViewBag.VigenteSeleccionado = vigente;
+        ViewBag.InquilinoSeleccionado = idInquilino;
 
+        return View(lista);
+    }
 
     public ActionResult Create()
     {
