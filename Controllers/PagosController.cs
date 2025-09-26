@@ -16,17 +16,26 @@ public class PagosController : Controller
         this.config = config;
     }
 
-    public ActionResult Index()
+    public ActionResult Index(int? idContrato)
     {
-        var lista = repository.ObtenerTodos();
+        var lista = repository.ObtenerTodosOPorFiltro(idContrato);
+
+        var contratos = new ContratosRepository(config).ObtenerTodosOPorFiltros();
+        ViewBag.Contratos = new SelectList(contratos, "IdContrato", "IdContrato", idContrato);
+        ViewBag.ContratoSeleccionado = idContrato;
+
         return View(lista);
     }
 
-    public ActionResult Create()
-    {
-        CargarDropdowns();
-        return View();
-    }
+
+   public ActionResult Create(int? idContrato = null)
+{
+    CargarDropdowns(null, idContrato);
+    return View();
+}
+
+
+
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -96,17 +105,26 @@ public class PagosController : Controller
         return View(pago);
     }
 
-    private void CargarDropdowns(Pago pago = null)
-    {
-        var contratos = new ContratosRepository(config).ObtenerTodosOPorFiltros()
-            .Select(c => new
-            {
-                Id = c.IdContrato,
-                Nombre = $"Contrato {c.IdContrato} - Inquilino {c.IdInquilino} - Inmueble {c.IdInmueble}"
-            })
-            .ToList();
+    private void CargarDropdowns(Pago pago = null, int? idContratoFiltrado = null)
+{
+    var contratos = new ContratosRepository(config).ObtenerTodosOPorFiltros()
+        .Select(c => new
+        {
+            Id = c.IdContrato,
+            Nombre = $"Contrato {c.IdContrato}"
+        })
+        .ToList();
 
-        ViewBag.Contratos = new SelectList(contratos, "Id", "Nombre", pago?.IdContrato);
-    }
+    // Insertamos opción vacía al inicio
+    contratos.Insert(0, new { Id = 0, Nombre = "-- Seleccione --" });
+
+    // Seleccionamos primero el contrato del pago si existe, sino usamos el filtrado
+    int? seleccionado = pago?.IdContrato > 0 ? pago.IdContrato : idContratoFiltrado;
+
+    ViewBag.Contratos = new SelectList(contratos, "Id", "Nombre", seleccionado);
+}
+
+
+
 
 }

@@ -48,23 +48,34 @@ public class PagosRepository : RepositoryBase
         return pago;
     }
 
-    public List<Pago> ObtenerTodos()
+    public List<Pago> ObtenerTodosOPorFiltro(int? idContrato = null)
+{
+    List<Pago> pagos = new List<Pago>();
+    using (var connection = new MySqlConnection(ConectionString))
     {
-        List<Pago> pagos = new List<Pago>();
-        using (var connection = new MySqlConnection(ConectionString))
-        {
-            string sql = $@"SELECT {nameof(Pago.IdPago)},
-                                   {nameof(Pago.IdContrato)},
-                                   {nameof(Pago.concepto)},
-                                   {nameof(Pago.importe)},
-                                   {nameof(Pago.Fecha)},
-                                   {nameof(Pago.anulado)}
-                            FROM Pagos;";
+        string sql = $@"SELECT {nameof(Pago.IdPago)},
+                               {nameof(Pago.IdContrato)},
+                               {nameof(Pago.concepto)},
+                               {nameof(Pago.importe)},
+                               {nameof(Pago.Fecha)},
+                               {nameof(Pago.anulado)}
+                        FROM Pagos";
 
-            using (var command = new MySqlCommand(sql, connection))
+        if (idContrato.HasValue)
+        {
+            sql += " WHERE IdContrato = @IdContrato";
+        }
+
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            if (idContrato.HasValue)
             {
-                connection.Open();
-                var reader = command.ExecuteReader();
+                command.Parameters.AddWithValue("@IdContrato", idContrato.Value);
+            }
+
+            connection.Open();
+            using (var reader = command.ExecuteReader())
+            {
                 while (reader.Read())
                 {
                     pagos.Add(new Pago
@@ -77,11 +88,13 @@ public class PagosRepository : RepositoryBase
                         anulado = reader.GetBoolean(nameof(Pago.anulado))
                     });
                 }
-                connection.Close();
             }
+            connection.Close();
         }
-        return pagos;
     }
+    return pagos;
+}
+
 
     public int Alta(Pago pago)
     {
