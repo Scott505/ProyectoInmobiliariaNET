@@ -57,16 +57,20 @@ public class InmueblesRepository : RepositoryBase
         List<Inmueble> inmuebles = new List<Inmueble>();
         using (var connection = new MySqlConnection(ConectionString))
         {
-            string sql = $@"SELECT {nameof(Inmueble.IdInmueble)},
-                                   {nameof(Inmueble.Direccion)},
-                                   {nameof(Inmueble.Tipo)},
-                                   {nameof(Inmueble.Uso)},
-                                   {nameof(Inmueble.Ambientes)},
-                                   {nameof(Inmueble.Latitud)},
-                                   {nameof(Inmueble.Longitud)},
-                                   {nameof(Inmueble.IdPropietario)},
-                                   {nameof(Inmueble.Disponible)}
-                            FROM Inmuebles;";
+            string sql = $@"
+            SELECT i.{nameof(Inmueble.IdInmueble)},
+                   i.{nameof(Inmueble.Direccion)},
+                   i.{nameof(Inmueble.Tipo)},
+                   i.{nameof(Inmueble.Uso)},
+                   i.{nameof(Inmueble.Ambientes)},
+                   i.{nameof(Inmueble.Latitud)},
+                   i.{nameof(Inmueble.Longitud)},
+                   i.{nameof(Inmueble.IdPropietario)},
+                   i.{nameof(Inmueble.Disponible)},
+                   p.Nombre AS PropietarioNombre,
+                   p.Apellido AS PropietarioApellido
+            FROM Inmuebles i
+            INNER JOIN Propietarios p ON i.IdPropietario = p.IdPropietario;";
 
             using (var command = new MySqlCommand(sql, connection))
             {
@@ -86,7 +90,10 @@ public class InmueblesRepository : RepositoryBase
                             Latitud = reader.GetDecimal(nameof(Inmueble.Latitud)),
                             Longitud = reader.GetDecimal(nameof(Inmueble.Longitud)),
                             IdPropietario = reader.GetInt32(nameof(Inmueble.IdPropietario)),
-                            Disponible = reader.GetBoolean(nameof(Inmueble.Disponible))
+                            Disponible = reader.GetBoolean(nameof(Inmueble.Disponible)),
+
+                            PropietarioNombre = reader.GetString("PropietarioNombre"),
+                            PropietarioApellido = reader.GetString("PropietarioApellido")
                         });
                     }
                 }
@@ -193,13 +200,19 @@ public class InmueblesRepository : RepositoryBase
 
         using (var connection = new MySqlConnection(ConectionString))
         {
-            var sql = "SELECT * FROM Inmuebles WHERE 1=1";
+            var sql = @"
+            SELECT i.IdInmueble, i.Direccion, i.Tipo, i.Uso, i.Ambientes, 
+                   i.Latitud, i.Longitud, i.IdPropietario, i.Disponible,
+                   p.Nombre AS PropietarioNombre, p.Apellido AS PropietarioApellido
+            FROM Inmuebles i
+            INNER JOIN Propietarios p ON i.IdPropietario = p.IdPropietario
+            WHERE 1=1";
 
             if (idPropietario.HasValue)
-                sql += " AND IdPropietario = @idPropietario";
+                sql += " AND i.IdPropietario = @idPropietario";
 
             if (disponible.HasValue)
-                sql += " AND Disponible = @disponible";
+                sql += " AND i.Disponible = @disponible";
 
             using (var command = new MySqlCommand(sql, connection))
             {
@@ -224,7 +237,9 @@ public class InmueblesRepository : RepositoryBase
                             Latitud = reader.GetDecimal("Latitud"),
                             Longitud = reader.GetDecimal("Longitud"),
                             IdPropietario = reader.GetInt32("IdPropietario"),
-                            Disponible = reader.GetBoolean("Disponible")
+                            Disponible = reader.GetBoolean("Disponible"),
+                            PropietarioNombre = reader.GetString("PropietarioNombre"),
+                            PropietarioApellido = reader.GetString("PropietarioApellido")
                         };
                         lista.Add(inmueble);
                     }
@@ -236,4 +251,5 @@ public class InmueblesRepository : RepositoryBase
         return lista;
     }
 }
+
 

@@ -32,6 +32,11 @@ public class Inmueble
     [Display(Name = "Disponibilidad")]
     public bool Disponible { get; set; } = true;
 
+    public string? PropietarioNombre { get; set; }
+    public string? PropietarioApellido { get; set; }
+    public string PropietarioNombreCompleto => $"{PropietarioNombre} {PropietarioApellido}";
+
+
     public override string ToString()
     {
         var res = $"Dirección: {Direccion}, Uso: {Uso}, Tipo: {Tipo}, Ambientes: {Ambientes}";

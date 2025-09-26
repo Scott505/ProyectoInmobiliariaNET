@@ -55,25 +55,21 @@ public class ContratosRepository : RepositoryBase
         List<Contrato> contratos = new List<Contrato>();
         using (var connection = new MySqlConnection(ConectionString))
         {
-            string sql = $@"SELECT {nameof(Contrato.IdContrato)},
-                               {nameof(Contrato.IdInquilino)},
-                               {nameof(Contrato.IdInmueble)},
-                               {nameof(Contrato.FechaInicio)},
-                               {nameof(Contrato.FechaFin)},
-                               {nameof(Contrato.ValorMensual)},
-                               {nameof(Contrato.Vigente)}
-                        FROM Contratos
-                        WHERE 1=1";
+            string sql = @"
+            SELECT c.IdContrato, c.IdInquilino, c.IdInmueble, c.FechaInicio, c.FechaFin, 
+                   c.ValorMensual, c.Vigente,
+                   i.Nombre AS InquilinoNombre, i.Apellido AS InquilinoApellido,
+                   inm.Direccion AS InmuebleDireccion
+            FROM Contratos c
+            INNER JOIN Inquilinos i ON c.IdInquilino = i.IdInquilino
+            INNER JOIN Inmuebles inm ON c.IdInmueble = inm.IdInmueble
+            WHERE 1=1";
 
             if (dias.HasValue)
-            {
-                sql += " AND DATEDIFF(FechaFin, CURDATE()) <= @dias";
-            }
+                sql += " AND DATEDIFF(c.FechaFin, CURDATE()) <= @dias";
 
             if (vigente.HasValue)
-            {
-                sql += " AND Vigente = @vigente";
-            }
+                sql += " AND c.Vigente = @vigente";
 
             using (var command = new MySqlCommand(sql, connection))
             {
@@ -89,13 +85,16 @@ public class ContratosRepository : RepositoryBase
                 {
                     contratos.Add(new Contrato
                     {
-                        IdContrato = reader.GetInt32(nameof(Contrato.IdContrato)),
-                        IdInquilino = reader.GetInt32(nameof(Contrato.IdInquilino)),
-                        IdInmueble = reader.GetInt32(nameof(Contrato.IdInmueble)),
-                        FechaInicio = reader.GetDateTime(nameof(Contrato.FechaInicio)),
-                        FechaFin = reader.GetDateTime(nameof(Contrato.FechaFin)),
-                        ValorMensual = reader.GetDouble(nameof(Contrato.ValorMensual)),
-                        Vigente = reader.GetBoolean(nameof(Contrato.Vigente))
+                        IdContrato = reader.GetInt32("IdContrato"),
+                        IdInquilino = reader.GetInt32("IdInquilino"),
+                        IdInmueble = reader.GetInt32("IdInmueble"),
+                        FechaInicio = reader.GetDateTime("FechaInicio"),
+                        FechaFin = reader.GetDateTime("FechaFin"),
+                        ValorMensual = reader.GetDouble("ValorMensual"),
+                        Vigente = reader.GetBoolean("Vigente"),
+                        InquilinoNombre = reader.GetString("InquilinoNombre"),
+                        InquilinoApellido = reader.GetString("InquilinoApellido"),
+                        InmuebleDireccion = reader.GetString("InmuebleDireccion")
                     });
                 }
                 connection.Close();
@@ -103,6 +102,7 @@ public class ContratosRepository : RepositoryBase
         }
         return contratos;
     }
+
 
     public int Alta(Contrato contrato)
     {

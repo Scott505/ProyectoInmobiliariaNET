@@ -116,7 +116,9 @@ public class InmueblesController : Controller
     private void CargarPropietariosDropdown(int? propietarioSeleccionado = null)
 {
     var propietarios = new PropietariosRepository(config).ObtenerTodos()
-        .Select(p => new { Id = p.IdPropietario, NombreCompleto = p.Nombre + " " + p.Apellido })
+        .Select(p => new
+        { Id = p.IdPropietario,
+            NombreCompleto = p.Nombre + " " + p.Apellido })
         .ToList();
 
     ViewBag.Propietarios = new SelectList(propietarios, "Id", "NombreCompleto", propietarioSeleccionado);
