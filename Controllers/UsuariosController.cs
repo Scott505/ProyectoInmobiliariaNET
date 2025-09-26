@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using _Net.Models;
 using Microsoft.AspNetCore.Http;
+using _Net.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace _Net.Controllers
 {
@@ -13,14 +14,54 @@ namespace _Net.Controllers
             repository = new UsuariosRepository(config);
         }
 
-        // GET: /Usuarios/Login
+        // -------------------------
+        // leer rol / id (Session first, cookie fallback)
+        // -------------------------
+        private string? GetUserRole()
+        {
+            try
+            {
+                var rol = HttpContext.Session.GetString("UsuarioRol");
+                if (!string.IsNullOrEmpty(rol)) return rol;
+            }
+            catch { /* session may not be configured, fallback to cookie */ }
+
+            if (Request.Cookies.ContainsKey("UsuarioRol"))
+                return Request.Cookies["UsuarioRol"];
+
+            return null;
+        }
+
+        private int? GetUserId()
+        {
+            try
+            {
+                var id = HttpContext.Session.GetInt32("UsuarioId");
+                if (id.HasValue) return id.Value;
+            }
+            catch { /* fallback to cookie */ }
+
+            if (Request.Cookies.ContainsKey("UsuarioId") && int.TryParse(Request.Cookies["UsuarioId"], out var cid))
+                return cid;
+
+            return null;
+        }
+
+        private bool IsAdmin() => string.Equals(GetUserRole(), "Administrador", System.StringComparison.Ordinal);
+
+        // -------------------------
+        // LOGIN / LOGOUT
+        // -------------------------
         [HttpGet]
         public IActionResult Login()
         {
+            // si ya está logueado, llevar a Home
+            if (IsAdmin() || GetUserId().HasValue())
+                return RedirectToAction("Index", "Home");
+
             return View();
         }
 
-        // POST: /Usuarios/Login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Login(string email, string password)
@@ -32,59 +73,80 @@ namespace _Net.Controllers
             }
 
             var usuario = repository.ObtenerPorEmail(email);
-
             if (usuario == null || usuario.Password != password)
             {
                 ModelState.AddModelError("", "Email o contraseña incorrecta");
                 return View();
             }
 
-            // Guarda en sesión el rol que viene de la BD (sin elección por parte del usuario)
-            HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario);
-            HttpContext.Session.SetString("UsuarioRol", usuario.Rol);
-            HttpContext.Session.SetString("UsuarioNombre", usuario.Nombre ?? string.Empty);
+            // Guardar en session si está disponible
+            try
+            {
+                HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario);
+                HttpContext.Session.SetString("UsuarioRol", usuario.Rol);
+                HttpContext.Session.SetString("UsuarioNombre", usuario.Nombre ?? string.Empty);
+            }
+            catch
+            {
+                // session no configurada: usar cookies como fallback (4 horas)
+                var cookieOptions = new CookieOptions
+                {
+                    HttpOnly = false,
+                    Expires = DateTimeOffset.UtcNow.AddHours(4),
+                    SameSite = SameSiteMode.Lax,
+                    Secure = false
+                };
+                Response.Cookies.Append("UsuarioId", usuario.IdUsuario.ToString(), cookieOptions);
+                Response.Cookies.Append("UsuarioRol", usuario.Rol ?? "Empleado", cookieOptions);
+                Response.Cookies.Append("UsuarioNombre", usuario.Nombre ?? string.Empty, cookieOptions);
+            }
 
             TempData["Mensaje"] = $"Bienvenido {usuario.Nombre ?? usuario.Email}";
             return RedirectToAction("Index", "Home");
         }
 
-        // GET: /Usuarios/Logout
         public IActionResult Logout()
         {
-            HttpContext.Session.Clear();
+            try
+            {
+                HttpContext.Session.Clear();
+            }
+            catch { /* ignore if session not configured */ }
+
+            // Borrar cookies fallback si quedaron
+            Response.Cookies.Delete("UsuarioId");
+            Response.Cookies.Delete("UsuarioRol");
+            Response.Cookies.Delete("UsuarioNombre");
+
             return RedirectToAction(nameof(Login));
         }
 
-        // Solo Administradores pueden ver listado completo
+        // -------------------------
+        // INDEX (listado) - SOLO ADMIN
+        // -------------------------
         public IActionResult Index()
         {
-            var rolSesion = HttpContext.Session.GetString("UsuarioRol");
-            if (rolSesion != "Administrador")
-                return Forbid();
+            if (!IsAdmin()) return Forbid();
 
             var usuarios = repository.ObtenerTodos();
             return View(usuarios);
         }
 
-        // Solo Administradores
+        // -------------------------
+        // CREATE- SOLO ADMIN
+        // -------------------------
         [HttpGet]
-        public IActionResult Crear()
+        public IActionResult Create()
         {
-            var rolSesion = HttpContext.Session.GetString("UsuarioRol");
-            if (rolSesion != "Administrador")
-                return Forbid();
-
+            if (!IsAdmin()) return Forbid();
             return View(new Usuario());
         }
 
-        // Solo Administradores
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Crear(Usuario usuario, string Password)
+        public IActionResult Create(Usuario usuario, string Password)
         {
-            var rolSesion = HttpContext.Session.GetString("UsuarioRol");
-            if (rolSesion != "Administrador")
-                return Forbid();
+            if (!IsAdmin()) return Forbid();
 
             if (!ModelState.IsValid)
             {
@@ -105,67 +167,81 @@ namespace _Net.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Admin puede editar cualquiera, Empleado solo su propio perfil
+        // -------------------------
+        // EDIT
+        // - Admin puede editar cualquiera
+        // - Empleado sólo su propio perfil
+        // -------------------------
         [HttpGet]
-        public IActionResult Editar(int id)
+        public IActionResult Edit(int id)
         {
-            var usuarioSesionId = HttpContext.Session.GetInt32("UsuarioId");
-            var rolSesion = HttpContext.Session.GetString("UsuarioRol");
+            var currentId = GetUserId();
+            var rol = GetUserRole();
 
-            if (rolSesion != "Administrador" && usuarioSesionId != id)
-                return Forbid();
+            // Empleado solo puede editar su propio perfil
+            if (rol != "Administrador" && currentId != id)
+                return RedirectToAction("Edit", new { id = currentId });
 
-            var u = repository.ObtenerPorId(id);
-            if (u == null) return NotFound();
+            var usuario = repository.ObtenerPorId(id);
+            if (usuario == null) return NotFound();
 
-            return View(u);
+            return View(usuario);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Editar(Usuario usuario, string NuevoPassword)
+        public IActionResult Edit(int id, string nombre, string email, string rol, bool activo, string NuevoPassword)
         {
-            var usuarioSesionId = HttpContext.Session.GetInt32("UsuarioId");
-            var rolSesion = HttpContext.Session.GetString("UsuarioRol");
+            var currentId = GetUserId();
+            var userRole = GetUserRole();
 
-            if (rolSesion != "Administrador" && usuarioSesionId != usuario.IdUsuario)
-                return Forbid();
+            var usuario = repository.ObtenerPorId(id);
+            if (usuario == null) return NotFound();
 
-            if (!ModelState.IsValid)
+            // Empleado solo puede modificar su nombre, email y contra
+            if (userRole != "Administrador")
             {
-                return View(usuario);
+                if (currentId != id)
+                    return RedirectToAction("Edit", new { id = currentId });
+
+                usuario.Nombre = nombre;
+                usuario.Email = email;
+                if (!string.IsNullOrWhiteSpace(NuevoPassword))
+                    usuario.Password = NuevoPassword;
+
+                repository.Modificar(usuario);
+                TempData["Mensaje"] = "Perfil actualizado correctamente";
+
+                // Vuelve a su propio Edit
+                return RedirectToAction("Edit", new { id = id });
             }
 
-            // Si se envió nuevo password, actualizarlo; si no, conservar el existente
+            // Administrador: puede modificar todo
+            usuario.Nombre = nombre;
+            usuario.Email = email;
+            usuario.Rol = rol;
+            usuario.Activo = activo;
             if (!string.IsNullOrWhiteSpace(NuevoPassword))
-            {
                 usuario.Password = NuevoPassword;
-            }
-            else
-            {
-                // Obtener current para conservar password si no se cambió
-                var actual = repository.ObtenerPorId(usuario.IdUsuario);
-                if (actual != null)
-                    usuario.Password = actual.Password;
-            }
 
             repository.Modificar(usuario);
             TempData["Mensaje"] = "Usuario actualizado correctamente";
 
-            // Si es admin, volver al listado; si es empleado, quedarse en su perfil
-            if (rolSesion == "Administrador")
-                return RedirectToAction(nameof(Index));
-
-            return RedirectToAction(nameof(Editar), new { id = usuario.IdUsuario });
+            return RedirectToAction("Index");
         }
 
+        // -------------------------
+        // DETAILS
+        // - Admin puede ver cualquiera
+        // - Empleado sólo su propio detalle
+        // -------------------------
         [HttpGet]
-        public IActionResult Detalles(int id)
+        public IActionResult Details(int id)
         {
-            var usuarioSesionId = HttpContext.Session.GetInt32("UsuarioId");
-            var rolSesion = HttpContext.Session.GetString("UsuarioRol");
+            var currentId = GetUserId();
+            var rol = GetUserRole();
 
-            if (rolSesion != "Administrador" && usuarioSesionId != id)
+            if (rol != "Administrador" && currentId != id)
                 return Forbid();
 
             var u = repository.ObtenerPorId(id);
@@ -173,19 +249,34 @@ namespace _Net.Controllers
             return View(u);
         }
 
-        // Solo Administradores pueden dar de baja (baja lógica)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Baja(int id)
+        // -------------------------
+        // DELETE (GET confirm + POST) - SOLO ADMIN
+        // -------------------------
+        [HttpGet]
+        public IActionResult Delete(int id)
         {
-            var rolSesion = HttpContext.Session.GetString("UsuarioRol");
-            if (rolSesion != "Administrador")
-                return Forbid();
+            if (!IsAdmin()) return Forbid();
+
+            var u = repository.ObtenerPorId(id);
+            if (u == null) return NotFound();
+            return View(u);
+        }
+
+        [HttpPost]
+        [ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteConfirmed(int id)
+        {
+            if (!IsAdmin()) return Forbid();
 
             repository.BajaLogica(id);
             TempData["Mensaje"] = "Usuario inhabilitado correctamente";
             return RedirectToAction(nameof(Index));
         }
-
+    }
+    internal static class NullableExtensions
+    {
+        public static bool HasValue<T>(this T? value) where T : struct
+            => value.HasValue;
     }
 }
