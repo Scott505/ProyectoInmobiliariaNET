@@ -49,16 +49,30 @@ public class ContratosController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public ActionResult Create(Contrato contrato)
+{
+    if (ModelState.IsValid)
     {
-        if (ModelState.IsValid)
+        repository.Alta(contrato);
+
+        // Obtener IdUsuario desde Session o Cookie
+        int userId = HttpContext.Session.GetInt32("UsuarioId")
+                     ?? int.Parse(Request.Cookies["UsuarioId"]);
+
+        // Registrar auditoría de creación
+        var auditoriaRepo = new AuditoriasContratosRepository(config);
+        auditoriaRepo.Insertar(new AuditoriaContrato
         {
-            repository.Alta(contrato);
-            TempData["Mensaje"] = "Contrato creado correctamente";
-            return RedirectToAction(nameof(Index));
-        }
-        CargarDropdowns(contrato);
-        return View(contrato);
+            IdContrato = contrato.IdContrato,
+            IdUsuarioCreador = userId,
+            FechaCreacion = DateTime.Now
+        });
+
+        TempData["Mensaje"] = "Contrato creado correctamente";
+        return RedirectToAction(nameof(Index));
     }
+    CargarDropdowns(contrato);
+    return View(contrato);
+}
 
     public ActionResult Eliminar(int id)
     {
@@ -73,11 +87,19 @@ public class ContratosController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public ActionResult ConfirmarEliminacion(int IdContrato)
-    {
-        repository.Baja(IdContrato); // Baja lógica: Vigente = false
-        TempData["Mensaje"] = "Contrato eliminado correctamente";
-        return RedirectToAction(nameof(Index));
-    }
+{
+    repository.Baja(IdContrato); // Baja lógica: Vigente = false
+
+    // Registrar auditoría de finalización
+    int userId = HttpContext.Session.GetInt32("UsuarioId")
+                 ?? int.Parse(Request.Cookies["UsuarioId"]);
+
+    var auditoriaRepo = new AuditoriasContratosRepository(config);
+    auditoriaRepo.FinalizarContrato(IdContrato, userId, DateTime.Now);
+
+    TempData["Mensaje"] = "Contrato finalizado correctamente";
+    return RedirectToAction(nameof(Index));
+}
 
     public ActionResult Edit(int id)
     {

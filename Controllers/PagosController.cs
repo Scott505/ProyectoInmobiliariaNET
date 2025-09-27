@@ -40,16 +40,25 @@ public class PagosController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public ActionResult Create(Pago pago)
+{
+    if (ModelState.IsValid)
     {
-        if (ModelState.IsValid)
-        {
-            repository.Alta(pago);
-            TempData["Mensaje"] = "Pago registrado correctamente";
-            return RedirectToAction(nameof(Index));
-        }
-        CargarDropdowns(pago);
-        return View(pago);
+        repository.Alta(pago);
+
+        // Obtener IdUsuario desde Session o Cookie
+        int userId = HttpContext.Session.GetInt32("UsuarioId")
+                     ?? int.Parse(Request.Cookies["UsuarioId"]);
+
+        // Insertar auditoría
+        var auditoriaRepo = new AuditoriaPagosRepository(config);
+        auditoriaRepo.InsertarCreacion(pago.IdPago, userId);
+
+        TempData["Mensaje"] = "Pago registrado correctamente";
+        return RedirectToAction(nameof(Index));
     }
+    CargarDropdowns(pago);
+    return View(pago);
+}
 
     public ActionResult Eliminar(int id)
     {
@@ -64,11 +73,18 @@ public class PagosController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public ActionResult ConfirmarEliminacion(int IdPago)
-    {
-        repository.Baja(IdPago); // Baja lógica: Anulado = true
-        TempData["Mensaje"] = "Pago anulado correctamente";
-        return RedirectToAction(nameof(Index));
-    }
+{
+    repository.Baja(IdPago); 
+
+    int userId = HttpContext.Session.GetInt32("UsuarioId")
+                 ?? int.Parse(Request.Cookies["UsuarioId"]);
+
+    var auditoriaRepo = new AuditoriaPagosRepository(config);
+    auditoriaRepo.RegistrarAnulacion(IdPago, userId);
+
+    TempData["Mensaje"] = "Pago anulado correctamente";
+    return RedirectToAction(nameof(Index));
+}
 
     public ActionResult Edit(int id)
     {

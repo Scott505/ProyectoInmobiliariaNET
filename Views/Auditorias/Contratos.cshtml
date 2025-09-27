@@ -1,0 +1,41 @@
+@model IEnumerable<_Net.Models.AuditoriaContrato>
+
+@{
+    ViewData["Title"] = "Auditoría de Contratos";
+    var rol = Context.Session.GetString("UsuarioRol");
+}
+
+<h1 class="mb-4">Auditoría de Contratos</h1>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No hay registros de auditoría.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id Registro</th>
+                <th>Id Contrato</th>
+                <th>Id Usuario Creador</th>
+                <th>Fecha Creación</th>
+                <th>Id Usuario Finalizador</th>
+                <th>Fecha Finalización</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.IdRegistro</td>
+                    <td>@item.IdContrato</td>
+                    <td>@item.IdUsuarioCreador</td>
+                    <td>@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@(item.IdUsuarioFinalizador.HasValue ? item.IdUsuarioFinalizador.ToString() : "-")</td>
+                    <td>@(item.FechaFinalizacion.HasValue ? item.FechaFinalizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
