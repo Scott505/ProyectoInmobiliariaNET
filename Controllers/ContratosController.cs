@@ -16,29 +16,36 @@ public class ContratosController : Controller
         this.config = config;
     }
 
-    public ActionResult Index(int? dias, bool? vigente, int? idInquilino)
-    {
-        var lista = repository.ObtenerTodosOPorFiltros(dias, vigente, idInquilino);
+public ActionResult Index(int? dias, bool? vigente, int? idInquilino, DateTime? fechaInicio, DateTime? fechaFin)
+{
+    var lista = repository.ObtenerTodosOPorFiltros(dias, vigente, idInquilino);
 
-        ViewBag.DiasOpciones = new SelectList(new[]
-        {
+    ViewBag.DiasOpciones = new SelectList(new[] {
         new { Value = "30", Text = "30 días" },
         new { Value = "60", Text = "60 días" },
         new { Value = "90", Text = "90 días" }
     }, "Value", "Text", dias?.ToString());
 
-        // Dropdown de inquilinos
-        var inquilinos = new InquilinosRepository(config).ObtenerTodos()
-            .Select(i => new { i.IdInquilino, NombreCompleto = i.Nombre + " " + i.Apellido })
-            .ToList();
-        ViewBag.Inquilinos = new SelectList(inquilinos, "IdInquilino", "NombreCompleto", idInquilino);
+    var inquilinos = new InquilinosRepository(config).ObtenerTodos()
+        .Select(i => new { i.IdInquilino, NombreCompleto = i.Nombre + " " + i.Apellido })
+        .ToList();
+    ViewBag.Inquilinos = new SelectList(inquilinos, "IdInquilino", "NombreCompleto", idInquilino);
 
-        ViewBag.DiasSeleccionado = dias;
-        ViewBag.VigenteSeleccionado = vigente;
-        ViewBag.InquilinoSeleccionado = idInquilino;
+    ViewBag.DiasSeleccionado = dias;
+    ViewBag.VigenteSeleccionado = vigente;
+    ViewBag.InquilinoSeleccionado = idInquilino;
 
-        return View(lista);
+    // Inmuebles disponibles si se enviaron fechas
+    if (fechaInicio.HasValue && fechaFin.HasValue)
+    {
+        var inmueblesRepo = new InmueblesRepository(config);
+        ViewBag.InmueblesDisponibles = inmueblesRepo.ObtenerDisponiblesEntreFechas(fechaInicio.Value, fechaFin.Value);
+        ViewBag.FechaInicio = fechaInicio.Value.ToShortDateString();
+        ViewBag.FechaFin = fechaFin.Value.ToShortDateString();
     }
+
+    return View(lista);
+}
 
     public ActionResult Create()
     {
@@ -46,19 +53,25 @@ public class ContratosController : Controller
         return View();
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public ActionResult Create(Contrato contrato)
+[HttpPost]
+[ValidateAntiForgeryToken]
+public ActionResult Create(Contrato contrato)
 {
     if (ModelState.IsValid)
     {
+        // Validar superposición de fechas
+        if (repository.ExisteSuperposicion(contrato.IdInmueble, contrato.FechaInicio, contrato.FechaFin))
+        {
+            ModelState.AddModelError("", "El contrato se superpone con otro contrato vigente para este inmueble.");
+            CargarDropdowns(contrato);
+            return View(contrato);
+        }
+
         repository.Alta(contrato);
 
-        // Obtener IdUsuario desde Session o Cookie
         int userId = HttpContext.Session.GetInt32("UsuarioId")
                      ?? int.Parse(Request.Cookies["UsuarioId"]);
 
-        // Registrar auditoría de creación
         var auditoriaRepo = new AuditoriasContratosRepository(config);
         auditoriaRepo.Insertar(new AuditoriaContrato
         {
@@ -113,18 +126,26 @@ public class ContratosController : Controller
     }
 
     [HttpPost]
-    [ValidateAntiForgeryToken]
-    public ActionResult Edit(Contrato contrato)
+[ValidateAntiForgeryToken]
+public ActionResult Edit(Contrato contrato)
+{
+    if (ModelState.IsValid)
     {
-        if (ModelState.IsValid)
+        // Validar superposición de fechas excluyendo el contrato actual
+        if (repository.ExisteSuperposicion(contrato.IdInmueble, contrato.FechaInicio, contrato.FechaFin, contrato.IdContrato))
         {
-            repository.Modificar(contrato);
-            TempData["Mensaje"] = "Contrato actualizado correctamente";
-            return RedirectToAction(nameof(Index));
+            ModelState.AddModelError("", "El contrato se superpone con otro contrato vigente para este inmueble.");
+            CargarDropdowns(contrato);
+            return View(contrato);
         }
-        CargarDropdowns(contrato);
-        return View(contrato);
+
+        repository.Modificar(contrato);
+        TempData["Mensaje"] = "Contrato actualizado correctamente";
+        return RedirectToAction(nameof(Index));
     }
+    CargarDropdowns(contrato);
+    return View(contrato);
+}
 
     public ActionResult Detalles(int id)
     {
@@ -147,5 +168,6 @@ public class ContratosController : Controller
             .ToList();
         ViewBag.Inmuebles = new SelectList(inmuebles, "IdInmueble", "Direccion", contrato?.IdInmueble);
     }
+
 
 }

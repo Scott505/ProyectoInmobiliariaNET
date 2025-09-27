@@ -198,4 +198,39 @@ public class ContratosRepository : RepositoryBase
         }
         return res;
     }
+    public bool ExisteSuperposicion(int idInmueble, DateTime fechaInicio, DateTime fechaFin, int? idContratoExcluir = null)
+{
+    bool existe = false;
+
+    using (var connection = new MySqlConnection(ConectionString))
+    {
+        string sql = $@"
+            SELECT COUNT(*) 
+            FROM Contratos 
+            WHERE IdInmueble = @IdInmueble 
+              AND Vigente = true
+              AND (@FechaInicio <= FechaFin AND @FechaFin >= FechaInicio)";
+
+        // Excluir el contrato actual en caso de edición
+        if (idContratoExcluir.HasValue)
+            sql += " AND IdContrato <> @IdContrato";
+
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            command.Parameters.AddWithValue("@IdInmueble", idInmueble);
+            command.Parameters.AddWithValue("@FechaInicio", fechaInicio);
+            command.Parameters.AddWithValue("@FechaFin", fechaFin);
+
+            if (idContratoExcluir.HasValue)
+                command.Parameters.AddWithValue("@IdContrato", idContratoExcluir.Value);
+
+            connection.Open();
+            existe = Convert.ToInt32(command.ExecuteScalar()) > 0;
+            connection.Close();
+        }
+    }
+
+    return existe;
+}
+
 }

@@ -250,6 +250,47 @@ public class InmueblesRepository : RepositoryBase
 
         return lista;
     }
+    public List<Inmueble> ObtenerDisponiblesEntreFechas(DateTime fechaInicio, DateTime fechaFin)
+{
+    var disponibles = new List<Inmueble>();
+
+    using (var connection = new MySqlConnection(ConectionString))
+    {
+        string sql = @"
+            SELECT *
+            FROM Inmuebles i
+            WHERE i.IdInmueble NOT IN (
+                SELECT c.IdInmueble
+                FROM Contratos c
+                WHERE c.Vigente = true
+                  AND (@FechaInicio <= c.FechaFin AND @FechaFin >= c.FechaInicio)
+            );";
+
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            command.Parameters.AddWithValue("@FechaInicio", fechaInicio);
+            command.Parameters.AddWithValue("@FechaFin", fechaFin);
+
+            connection.Open();
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    disponibles.Add(new Inmueble
+                    {
+                        IdInmueble = reader.GetInt32("IdInmueble"),
+                        Direccion = reader.GetString("Direccion"),
+                        // Agregar otros campos si los tienes
+                    });
+                }
+            }
+            connection.Close();
+        }
+    }
+
+    return disponibles;
+}
+
 }
 
 

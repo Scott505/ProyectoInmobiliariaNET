@@ -10,6 +10,43 @@
         <i class="bi bi-plus-lg"></i> Nuevo
     </a>
 </div>
+<form method="get" class="mb-3">
+    <div class="row g-2 align-items-center">
+        <div class="col-auto">
+            <label>Fecha inicio</label>
+            <input type="date" name="fechaInicio" class="form-control" value="@ViewBag.FechaInicio" />
+        </div>
+        <div class="col-auto">
+            <label>Fecha fin</label>
+            <input type="date" name="fechaFin" class="form-control" value="@ViewBag.FechaFin" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary mt-4">Buscar inmuebles disponibles</button>
+        </div>
+    </div>
+</form>
+
+@if (ViewBag.InmueblesDisponibles != null)
+{
+    <h3>Inmuebles disponibles entre @ViewBag.FechaInicio y @ViewBag.FechaFin</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID Inmueble</th>
+                <th>Dirección</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var inm in ViewBag.InmueblesDisponibles)
+            {
+                <tr>
+                    <td>@inm.IdInmueble</td>
+                    <td>@inm.Direccion</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 <form method="get" class="mb-3">
     <div class="row g-2 align-items-center">
