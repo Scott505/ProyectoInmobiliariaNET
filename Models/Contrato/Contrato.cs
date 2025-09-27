@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 
 namespace _Net.Models;
 
@@ -26,10 +28,14 @@ public class Contrato
     [Display(Name = "¿Vigente?")]
     public bool Vigente { get; set; } = true;
 
-    public string InquilinoNombre { get; set; }
-    public string InquilinoApellido { get; set; }
+    [NotMapped]
+    public string? InquilinoNombre { get; set; }
+    [NotMapped]
+    public string? InquilinoApellido { get; set; }
+    [NotMapped]
     public string InquilinoNombreCompleto => $"{InquilinoNombre} {InquilinoApellido}";
-    public string InmuebleDireccion { get; set; }
+    [NotMapped]
+    public string? InmuebleDireccion { get; set; }
 
 
     public override string ToString()
