@@ -6,16 +6,13 @@
 
 <div class="text-center mb-3">
     <h1 class="display-4">User List</h1>
-    <a class="btn btn-success" asp-action="Create">
-        <i class="bi bi-plus-lg"></i> Nuevo usuario
-    </a>
+    <a class="btn btn-success" asp-action="Create">Nuevo usuario</a>
 </div>
 
 <table class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.First().IdUsuario)</th>
-            <th>@Html.DisplayNameFor(model => model.First().Nombre)</th>
+            <th>Usuario</th>
             <th>@Html.DisplayNameFor(model => model.First().Email)</th>
             <th>@Html.DisplayNameFor(model => model.First().Rol)</th>
             <th>Activo</th>
@@ -26,8 +23,16 @@
         @foreach (var usuario in Model)
         {
             <tr>
-                <td>@usuario.IdUsuario</td>
-                <td>@usuario.Nombre</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <img src="@Url.Content(string.IsNullOrEmpty(usuario.Avatar) ? "~/images/no-avatar.png" : usuario.Avatar)"
+                             alt="avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:8px" />
+                        <div>
+                            <div>@(string.IsNullOrEmpty(usuario.Nombre) ? usuario.Email : usuario.Nombre)</div>
+                            <small class="text-muted">(@usuario.IdUsuario)</small>
+                        </div>
+                    </div>
+                </td>
                 <td>@usuario.Email</td>
                 <td>@usuario.Rol</td>
                 <td>@(usuario.Activo ? "Sí" : "No")</td>

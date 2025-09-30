@@ -2,24 +2,22 @@
 
 @{
     ViewData["Title"] = "Editar Usuario";
-    var esAdmin = Context.Session.GetString("UsuarioRol") == "Administrador";
+    var esAdmin = Context.User.IsInRole("Administrador");
 }
 
 <h4>Editar Usuario</h4>
 
-<form asp-action="Edit" method="post" class="col-md-4">
-    <input type="hidden" asp-for="IdUsuario" />
+<form asp-action="Edit" method="post" class="col-md-4" enctype="multipart/form-data">
+    <input type="hidden" name="id" value="@Model.IdUsuario" />
 
     <div class="mb-3">
-        <label asp-for="Nombre" class="form-label">Nombre</label>
-        <input asp-for="Nombre" class="form-control" />
-        <span asp-validation-for="Nombre" class="text-danger"></span>
+        <label class="form-label">Nombre</label>
+        <input name="nombre" value="@Model.Nombre" class="form-control" />
     </div>
 
     <div class="mb-3">
-        <label asp-for="Email" class="form-label">Email</label>
-        <input asp-for="Email" type="email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
+        <label class="form-label">Email</label>
+        <input name="email" type="email" value="@Model.Email" class="form-control" />
     </div>
 
     <div class="mb-3">
@@ -30,23 +28,38 @@
     @if (esAdmin)
     {
         <div class="mb-3">
-            <label asp-for="Rol" class="form-label">Rol</label>
-            <select asp-for="Rol" class="form-select">
-                <option value="Administrador" selected="@Model.Rol == "Administrador"">Administrador</option>
-                <option value="Empleado" selected="@Model.Rol == "Empleado"">Empleado</option>
+            <label class="form-label">Rol</label>
+            <select name="rol" class="form-select">
+                <option value="Administrador" selected="@(Model.Rol == "Administrador")">Administrador</option>
+                <option value="Empleado" selected="@(Model.Rol == "Empleado")">Empleado</option>
             </select>
-            <span asp-validation-for="Rol" class="text-danger"></span>
         </div>
 
         <div class="mb-3">
-            <label asp-for="Activo" class="form-label">Activo</label>
-            <select asp-for="Activo" class="form-select">
-                <option value="true" selected="@Model.Activo">Sí</option>
-                <option value="false" selected="!@Model.Activo">No</option>
+            <label class="form-label">Activo</label>
+            <select name="activo" class="form-select">
+                <option value="true" selected="@(Model.Activo)">Sí</option>
+                <option value="false" selected="!@(Model.Activo)">No</option>
             </select>
-            <span asp-validation-for="Activo" class="text-danger"></span>
         </div>
     }
+
+    @if (!string.IsNullOrEmpty(Model.Avatar))
+    {
+        <div class="mb-3">
+            <label class="form-label">Avatar actual</label><br />
+            <img src="@Url.Content(Model.Avatar)" style="width:80px;height:80px;border-radius:50%;object-fit:cover" />
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" name="borrarAvatar" value="true" id="borrarAvatar">
+                <label class="form-check-label" for="borrarAvatar">Borrar avatar</label>
+            </div>
+        </div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Cambiar avatar</label>
+        <input type="file" name="avatar" class="form-control" accept="image/*" />
+    </div>
 
     <button type="submit" class="btn btn-primary">Guardar</button>
     @if (esAdmin)

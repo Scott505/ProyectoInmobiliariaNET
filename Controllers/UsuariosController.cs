@@ -1,70 +1,41 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using _Net.Models;
 using Microsoft.Extensions.Configuration;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 
 namespace _Net.Controllers
 {
+    [Authorize]
     public class UsuariosController : Controller
     {
         private readonly UsuariosRepository repository;
+        private readonly IWebHostEnvironment env;
 
-        public UsuariosController(IConfiguration config)
+        public UsuariosController(IConfiguration config, IWebHostEnvironment env)
         {
             repository = new UsuariosRepository(config);
+            this.env = env;
         }
 
-        // -------------------------
-        // leer rol / id (Session first, cookie fallback)
-        // -------------------------
-        private string? GetUserRole()
-        {
-            try
-            {
-                var rol = HttpContext.Session.GetString("UsuarioRol");
-                if (!string.IsNullOrEmpty(rol)) return rol;
-            }
-            catch { /* session may not be configured, fallback to cookie */ }
+        #region LOGIN / LOGOUT
 
-            if (Request.Cookies.ContainsKey("UsuarioRol"))
-                return Request.Cookies["UsuarioRol"];
-
-            return null;
-        }
-
-        private int? GetUserId()
-        {
-            try
-            {
-                var id = HttpContext.Session.GetInt32("UsuarioId");
-                if (id.HasValue) return id.Value;
-            }
-            catch { /* fallback to cookie */ }
-
-            if (Request.Cookies.ContainsKey("UsuarioId") && int.TryParse(Request.Cookies["UsuarioId"], out var cid))
-                return cid;
-
-            return null;
-        }
-
-        private bool IsAdmin() => string.Equals(GetUserRole(), "Administrador", System.StringComparison.Ordinal);
-
-        // -------------------------
-        // LOGIN / LOGOUT
-        // -------------------------
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Login()
         {
-            // si ya está logueado, llevar a Home
-            if (IsAdmin() || GetUserId().HasValue())
+            if (User?.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
 
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Login(string email, string password)
+        public async Task<IActionResult> Login(string email, string password)
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
@@ -79,80 +50,49 @@ namespace _Net.Controllers
                 return View();
             }
 
-            // Guardar en session si está disponible
-            try
+            var claims = new List<Claim>
             {
-                HttpContext.Session.SetInt32("UsuarioId", usuario.IdUsuario);
-                HttpContext.Session.SetString("UsuarioRol", usuario.Rol);
-                HttpContext.Session.SetString("UsuarioNombre", usuario.Nombre ?? string.Empty);
-            }
-            catch
-            {
-                // session no configurada: usar cookies como fallback (4 horas)
-                var cookieOptions = new CookieOptions
-                {
-                    HttpOnly = false,
-                    Expires = DateTimeOffset.UtcNow.AddHours(4),
-                    SameSite = SameSiteMode.Lax,
-                    Secure = false
-                };
-                Response.Cookies.Append("UsuarioId", usuario.IdUsuario.ToString(), cookieOptions);
-                Response.Cookies.Append("UsuarioRol", usuario.Rol ?? "Empleado", cookieOptions);
-                Response.Cookies.Append("UsuarioNombre", usuario.Nombre ?? string.Empty, cookieOptions);
-            }
+                new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
+                new Claim(ClaimTypes.Name, usuario.Nombre ?? usuario.Email),
+                new Claim(ClaimTypes.Email, usuario.Email),
+                new Claim(ClaimTypes.Role, usuario.Rol)
+            };
+
+            if (!string.IsNullOrEmpty(usuario.Avatar))
+                claims.Add(new Claim("avatar", usuario.Avatar));
+
+            var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,
+                new AuthenticationProperties { IsPersistent = false, ExpiresUtc = DateTimeOffset.UtcNow.AddHours(4) });
 
             TempData["Mensaje"] = $"Bienvenido {usuario.Nombre ?? usuario.Email}";
             return RedirectToAction("Index", "Home");
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
-            try
-            {
-                HttpContext.Session.Clear();
-            }
-            catch { /* ignore if session not configured */ }
-
-            // Borrar cookies fallback si quedaron
-            Response.Cookies.Delete("UsuarioId");
-            Response.Cookies.Delete("UsuarioRol");
-            Response.Cookies.Delete("UsuarioNombre");
-
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction(nameof(Login));
         }
 
-        // -------------------------
-        // INDEX (listado) - SOLO ADMIN
-        // -------------------------
-        public IActionResult Index()
-        {
-            if (!IsAdmin()) return Forbid();
+        #endregion
 
-            var usuarios = repository.ObtenerTodos();
-            return View(usuarios);
-        }
+        #region INDEX / CRUD
 
-        // -------------------------
-        // CREATE- SOLO ADMIN
-        // -------------------------
+        [Authorize(Policy = "AdminOnly")]
+        public IActionResult Index() => View(repository.ObtenerTodos());
+
+        [Authorize(Policy = "AdminOnly")]
         [HttpGet]
-        public IActionResult Create()
-        {
-            if (!IsAdmin()) return Forbid();
-            return View(new Usuario());
-        }
+        public IActionResult Create() => View(new Usuario());
 
+        [Authorize(Policy = "AdminOnly")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Usuario usuario, string Password)
+        public IActionResult Create(Usuario usuario, string Password, IFormFile? avatar)
         {
-            if (!IsAdmin()) return Forbid();
-
-            if (!ModelState.IsValid)
-            {
-                return View(usuario);
-            }
-
+            if (!ModelState.IsValid) return View(usuario);
             if (string.IsNullOrWhiteSpace(Password))
             {
                 ModelState.AddModelError("", "La contraseña es obligatoria.");
@@ -162,121 +102,144 @@ namespace _Net.Controllers
             usuario.Password = Password;
             usuario.Activo = true;
 
+            try
+            {
+                usuario.Avatar = GuardarAvatar(avatar);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(usuario);
+            }
+
             repository.Alta(usuario);
             TempData["Mensaje"] = "Usuario creado correctamente";
             return RedirectToAction(nameof(Index));
         }
 
-        // -------------------------
-        // EDIT
-        // - Admin puede editar cualquiera
-        // - Empleado sólo su propio perfil
-        // -------------------------
         [HttpGet]
         public IActionResult Edit(int id)
         {
-            var currentId = GetUserId();
-            var rol = GetUserRole();
-
-            // Empleado solo puede editar su propio perfil
-            if (rol != "Administrador" && currentId != id)
-                return RedirectToAction("Edit", new { id = currentId });
-
             var usuario = repository.ObtenerPorId(id);
             if (usuario == null) return NotFound();
+
+            var currentId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var rol = User.FindFirstValue(ClaimTypes.Role);
+            if (rol != "Administrador" && currentId != id) return RedirectToAction("Edit", new { id = currentId });
 
             return View(usuario);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, string nombre, string email, string rol, bool activo, string NuevoPassword)
+        public IActionResult Edit(int id, string nombre, string email, string rol, bool activo,
+                                  string nuevoPassword, IFormFile? avatar, bool borrarAvatar = false)
         {
-            var currentId = GetUserId();
-            var userRole = GetUserRole();
-
             var usuario = repository.ObtenerPorId(id);
             if (usuario == null) return NotFound();
 
-            // Empleado solo puede modificar su nombre, email y contra
-            if (userRole != "Administrador")
-            {
-                if (currentId != id)
-                    return RedirectToAction("Edit", new { id = currentId });
+            var currentId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+            if (userRole != "Administrador" && currentId != id)
+                return RedirectToAction("Edit", new { id = currentId });
 
-                usuario.Nombre = nombre;
-                usuario.Email = email;
-                if (!string.IsNullOrWhiteSpace(NuevoPassword))
-                    usuario.Password = NuevoPassword;
-
-                repository.Modificar(usuario);
-                TempData["Mensaje"] = "Perfil actualizado correctamente";
-
-                // Vuelve a su propio Edit
-                return RedirectToAction("Edit", new { id = id });
-            }
-
-            // Administrador: puede modificar todo
+            // Campos editables
             usuario.Nombre = nombre;
             usuario.Email = email;
-            usuario.Rol = rol;
-            usuario.Activo = activo;
-            if (!string.IsNullOrWhiteSpace(NuevoPassword))
-                usuario.Password = NuevoPassword;
+            if (userRole == "Administrador")
+            {
+                usuario.Rol = rol;
+                usuario.Activo = activo;
+            }
+
+            if (!string.IsNullOrWhiteSpace(nuevoPassword))
+                usuario.Password = nuevoPassword;
+
+            try
+            {
+                usuario.Avatar = GuardarAvatar(avatar, borrarAvatar ? null : usuario.Avatar);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(usuario);
+            }
 
             repository.Modificar(usuario);
-            TempData["Mensaje"] = "Usuario actualizado correctamente";
 
-            return RedirectToAction("Index");
+            TempData["Mensaje"] = userRole == "Administrador" ? "Usuario actualizado correctamente" : "Perfil actualizado correctamente";
+            return userRole == "Administrador" ? RedirectToAction("Index") : RedirectToAction("Edit", new { id });
         }
 
-        // -------------------------
-        // DETAILS
-        // - Admin puede ver cualquiera
-        // - Empleado sólo su propio detalle
-        // -------------------------
         [HttpGet]
         public IActionResult Details(int id)
         {
-            var currentId = GetUserId();
-            var rol = GetUserRole();
+            var usuario = repository.ObtenerPorId(id);
+            if (usuario == null) return NotFound();
 
-            if (rol != "Administrador" && currentId != id)
-                return Forbid();
+            var currentId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var rol = User.FindFirstValue(ClaimTypes.Role);
+            if (rol != "Administrador" && currentId != id) return Forbid();
 
-            var u = repository.ObtenerPorId(id);
-            if (u == null) return NotFound();
-            return View(u);
+            return View(usuario);
         }
 
-        // -------------------------
-        // DELETE (GET confirm + POST) - SOLO ADMIN
-        // -------------------------
+        [Authorize(Policy = "AdminOnly")]
         [HttpGet]
         public IActionResult Delete(int id)
         {
-            if (!IsAdmin()) return Forbid();
-
-            var u = repository.ObtenerPorId(id);
-            if (u == null) return NotFound();
-            return View(u);
+            var usuario = repository.ObtenerPorId(id);
+            if (usuario == null) return NotFound();
+            return View(usuario);
         }
 
-        [HttpPost]
-        [ActionName("Delete")]
+        [Authorize(Policy = "AdminOnly")]
+        [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            if (!IsAdmin()) return Forbid();
+            var usuario = repository.ObtenerPorId(id);
+            if (usuario != null && !string.IsNullOrEmpty(usuario.Avatar))
+                TryDeleteAvatarFile(usuario.Avatar);
 
             repository.BajaLogica(id);
             TempData["Mensaje"] = "Usuario inhabilitado correctamente";
             return RedirectToAction(nameof(Index));
         }
-    }
-    internal static class NullableExtensions
-    {
-        public static bool HasValue<T>(this T? value) where T : struct
-            => value.HasValue;
+
+        #endregion
+
+        #region AVATAR
+
+        private string? GuardarAvatar(IFormFile? avatar, string? avatarPrevio = null)
+        {
+            if (avatar == null || avatar.Length == 0) return avatarPrevio;
+
+            var accepted = new[] { "image/png", "image/jpeg", "image/jpg", "image/gif" };
+            if (!accepted.Contains(avatar.ContentType)) throw new InvalidOperationException("Formato de imagen no permitido.");
+            if (avatar.Length > 2 * 1024 * 1024) throw new InvalidOperationException("El avatar supera 2 MB.");
+
+            if (!string.IsNullOrEmpty(avatarPrevio)) TryDeleteAvatarFile(avatarPrevio);
+
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(avatar.FileName)}";
+            var avatarsFolder = Path.Combine(env.WebRootPath, "avatars");
+            if (!Directory.Exists(avatarsFolder)) Directory.CreateDirectory(avatarsFolder);
+
+            var filePath = Path.Combine(avatarsFolder, fileName);
+            using var stream = new FileStream(filePath, FileMode.Create);
+            avatar.CopyTo(stream);
+
+            return "/avatars/" + fileName;
+        }
+
+        private void TryDeleteAvatarFile(string avatarPath)
+        {
+            if (string.IsNullOrEmpty(avatarPath)) return;
+            var relative = avatarPath.TrimStart('/');
+            var fullPath = Path.Combine(env.WebRootPath, relative);
+            if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+        }
+
+        #endregion
     }
 }

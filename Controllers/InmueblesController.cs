@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using _Net.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
-
+using Microsoft.AspNetCore.Authorization;
 
 namespace _Net.Controllers;
-
+[Authorize]
 public class InmueblesController : Controller
 {
     private readonly InmueblesRepository repository;

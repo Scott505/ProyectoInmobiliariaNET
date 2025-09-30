@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using _Net.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace _Net.Controllers;
 
+[Authorize]
 public class PropietariosController : Controller
 {
     private readonly PropietariosRepository repository;

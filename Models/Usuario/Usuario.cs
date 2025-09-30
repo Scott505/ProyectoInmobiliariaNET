@@ -22,5 +22,7 @@ namespace _Net.Models
         public bool Activo { get; set; } = true;
 
         public int? IdPropietario { get; set; }
+
+        public string? Avatar { get; set; }
     }
 }

@@ -58,10 +58,12 @@
                 <td>
                     <div class="btn-group">
                         <a class="btn btn-primary" asp-action="Edit" asp-route-id="@inmueble.IdInmueble">Editar</a>
-                        @if (rol == "Administrador")
-                       {
-                      <a class="btn btn-danger" asp-action="Eliminar" asp-route-id="@inmueble.IdInmueble">Eliminar</a>
-                       }
+                      @if (User.IsInRole("Administrador"))
+                        {
+                            <a class="btn btn-danger" asp-action="Eliminar" asp-route-id="@inmueble.IdInmueble" title="Eliminar">
+                                Eliminar
+                            </a>
+                        }
                     </div>
                 </td>
             </tr>

@@ -14,11 +14,12 @@ namespace _Net.Models
             ConectionString = config.GetConnectionString("DefaultConnection")!;
         }
 
+        // Listado: no incluir blobs (guardamos rutas)
         public List<Usuario> ObtenerTodos()
         {
             var lista = new List<Usuario>();
             using var conn = new MySqlConnection(ConectionString);
-            string sql = "SELECT idUsuario, email, password, nombre, rol, activo FROM usuarios;";
+            string sql = "SELECT idUsuario, email, password, nombre, rol, activo, avatar FROM usuarios;";
             using var cmd = new MySqlCommand(sql, conn);
             conn.Open();
             using var r = cmd.ExecuteReader();
@@ -31,7 +32,8 @@ namespace _Net.Models
                     Password = r.GetString("password"),
                     Nombre = r.IsDBNull(r.GetOrdinal("nombre")) ? null : r.GetString("nombre"),
                     Rol = r.GetString("rol"),
-                    Activo = r.GetBoolean("activo")
+                    Activo = r.GetBoolean("activo"),
+                    Avatar = r.IsDBNull(r.GetOrdinal("avatar")) ? null : r.GetString("avatar")
                 });
             }
             conn.Close();
@@ -42,7 +44,7 @@ namespace _Net.Models
         {
             Usuario? u = null;
             using var conn = new MySqlConnection(ConectionString);
-            string sql = "SELECT idUsuario, email, password, nombre, rol, activo FROM usuarios WHERE idUsuario=@Id;";
+            string sql = "SELECT idUsuario, email, password, nombre, rol, activo, avatar FROM usuarios WHERE idUsuario=@Id;";
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@Id", id);
             conn.Open();
@@ -56,7 +58,8 @@ namespace _Net.Models
                     Password = r.GetString("password"),
                     Nombre = r.IsDBNull(r.GetOrdinal("nombre")) ? null : r.GetString("nombre"),
                     Rol = r.GetString("rol"),
-                    Activo = r.GetBoolean("activo")
+                    Activo = r.GetBoolean("activo"),
+                    Avatar = r.IsDBNull(r.GetOrdinal("avatar")) ? null : r.GetString("avatar")
                 };
             }
             conn.Close();
@@ -67,7 +70,7 @@ namespace _Net.Models
         {
             Usuario? u = null;
             using var conn = new MySqlConnection(ConectionString);
-            string sql = "SELECT idUsuario, email, password, nombre, rol, activo FROM usuarios WHERE email=@Email AND activo=1;";
+            string sql = "SELECT idUsuario, email, password, nombre, rol, activo, avatar FROM usuarios WHERE email=@Email AND activo=1;";
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@Email", email);
             conn.Open();
@@ -81,7 +84,8 @@ namespace _Net.Models
                     Password = r.GetString("password"),
                     Nombre = r.IsDBNull(r.GetOrdinal("nombre")) ? null : r.GetString("nombre"),
                     Rol = r.GetString("rol"),
-                    Activo = r.GetBoolean("activo")
+                    Activo = r.GetBoolean("activo"),
+                    Avatar = r.IsDBNull(r.GetOrdinal("avatar")) ? null : r.GetString("avatar")
                 };
             }
             conn.Close();
@@ -92,8 +96,8 @@ namespace _Net.Models
         {
             int id = -1;
             using var conn = new MySqlConnection(ConectionString);
-            string sql = @"INSERT INTO usuarios (email, password, nombre, rol, activo)
-                           VALUES (@Email, @Password, @Nombre, @Rol, @Activo);
+            string sql = @"INSERT INTO usuarios (email, password, nombre, rol, activo, avatar)
+                           VALUES (@Email, @Password, @Nombre, @Rol, @Activo, @Avatar);
                            SELECT LAST_INSERT_ID();";
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@Email", u.Email);
@@ -101,6 +105,7 @@ namespace _Net.Models
             cmd.Parameters.AddWithValue("@Nombre", (object?)u.Nombre ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Rol", u.Rol);
             cmd.Parameters.AddWithValue("@Activo", u.Activo);
+            cmd.Parameters.AddWithValue("@Avatar", (object?)u.Avatar ?? DBNull.Value);
             conn.Open();
             id = Convert.ToInt32(cmd.ExecuteScalar());
             conn.Close();
@@ -111,7 +116,7 @@ namespace _Net.Models
         {
             int res = -1;
             using var conn = new MySqlConnection(ConectionString);
-            string sql = @"UPDATE usuarios SET email=@Email, password=@Password, nombre=@Nombre, rol=@Rol, activo=@Activo
+            string sql = @"UPDATE usuarios SET email=@Email, password=@Password, nombre=@Nombre, rol=@Rol, activo=@Activo, avatar=@Avatar
                            WHERE idUsuario=@IdUsuario;";
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@Email", u.Email);
@@ -119,6 +124,7 @@ namespace _Net.Models
             cmd.Parameters.AddWithValue("@Nombre", (object?)u.Nombre ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Rol", u.Rol);
             cmd.Parameters.AddWithValue("@Activo", u.Activo);
+            cmd.Parameters.AddWithValue("@Avatar", (object?)u.Avatar ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@IdUsuario", u.IdUsuario);
             conn.Open();
             res = cmd.ExecuteNonQuery();

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using _Net.Models;
-
+using Microsoft.AspNetCore.Authorization;
+[Authorize]
 public class AuditoriasController : Controller
 {
     private readonly IConfiguration config;

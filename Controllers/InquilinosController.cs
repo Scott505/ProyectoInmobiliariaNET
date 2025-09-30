@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using _Net.Models;
-
+using Microsoft.AspNetCore.Authorization;
 namespace _Net.Controllers;
 
+[Authorize]
 public class InquilinosController : Controller
 {
     private readonly InquilinosRepository repository;
