@@ -10,41 +10,47 @@ namespace _Net.Models
         {
             connectionString = config.GetConnectionString("DefaultConnection");
         }
+public IList<AuditoriaContrato> ObtenerTodos()
+{
+    var lista = new List<AuditoriaContrato>();
 
-        public IList<AuditoriaContrato> ObtenerTodos()
+    using (var connection = new MySqlConnection(connectionString))
+    {
+        string sql = @"SELECT a.IdRegistro, a.IdContrato, a.IdUsuarioCreador, a.FechaCreacion,
+                              a.IdUsuarioFinalizador, a.FechaFinalizacion,
+                              u1.Nombre AS NombreUsuarioCreador,
+                              u2.Nombre AS NombreUsuarioFinalizador
+                       FROM AuditoriaContratos a
+                       JOIN Usuarios u1 ON a.IdUsuarioCreador = u1.IdUsuario
+                       LEFT JOIN Usuarios u2 ON a.IdUsuarioFinalizador = u2.IdUsuario;";
+
+        using (var command = new MySqlCommand(sql, connection))
         {
-            var lista = new List<AuditoriaContrato>();
-
-            using (var connection = new MySqlConnection(connectionString))
+            connection.Open();
+            var reader = command.ExecuteReader();
+            while (reader.Read())
             {
-                string sql = @"SELECT IdRegistro, IdContrato, IdUsuarioCreador, FechaCreacion, 
-                                      IdUsuarioFinalizador, FechaFinalizacion
-                               FROM AuditoriaContratos";
-
-                using (var command = new MySqlCommand(sql, connection))
+                lista.Add(new AuditoriaContrato
                 {
-                    connection.Open();
-                    var reader = command.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        lista.Add(new AuditoriaContrato
-                        {
-                            IdRegistro = reader.GetInt32("IdRegistro"),
-                            IdContrato = reader.GetInt32("IdContrato"),
-                            IdUsuarioCreador = reader.GetInt32("IdUsuarioCreador"),
-                            FechaCreacion = reader.GetDateTime("FechaCreacion"),
-                            IdUsuarioFinalizador = reader.IsDBNull(reader.GetOrdinal("IdUsuarioFinalizador"))
-                                ? null : reader.GetInt32("IdUsuarioFinalizador"),
-                            FechaFinalizacion = reader.IsDBNull(reader.GetOrdinal("FechaFinalizacion"))
-                                ? null : reader.GetDateTime("FechaFinalizacion")
-                        });
-                    }
-                    connection.Close();
-                }
+                    IdRegistro = reader.GetInt32("IdRegistro"),
+                    IdContrato = reader.GetInt32("IdContrato"),
+                    IdUsuarioCreador = reader.GetInt32("IdUsuarioCreador"),
+                    FechaCreacion = reader.GetDateTime("FechaCreacion"),
+                    IdUsuarioFinalizador = reader.IsDBNull(reader.GetOrdinal("IdUsuarioFinalizador"))
+                        ? null : reader.GetInt32("IdUsuarioFinalizador"),
+                    FechaFinalizacion = reader.IsDBNull(reader.GetOrdinal("FechaFinalizacion"))
+                        ? null : reader.GetDateTime("FechaFinalizacion"),
+                    NombreUsuarioCreador = reader.GetString("NombreUsuarioCreador"),
+                    NombreUsuarioFinalizador = reader.IsDBNull(reader.GetOrdinal("NombreUsuarioFinalizador"))
+                        ? null : reader.GetString("NombreUsuarioFinalizador")
+                });
             }
-
-            return lista;
+            connection.Close();
         }
+    }
+
+    return lista;
+}
 
         public int Insertar(AuditoriaContrato auditoria)
         {

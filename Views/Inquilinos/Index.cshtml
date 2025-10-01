@@ -15,37 +15,33 @@
 <table class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.IdInquilino)</th>
             <th>@Html.DisplayNameFor(model => model.Documento)</th>
-            <th>@Html.DisplayNameFor(model => model.Nombre)</th>
-            <th>@Html.DisplayNameFor(model => model.Apellido)</th>
+            <th>Nombre del Inquilino</th>
             <th>@Html.DisplayNameFor(model => model.Telefono)</th>
             <th>@Html.DisplayNameFor(model => model.Mail)</th>
             <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var Inquilino in Model)
+        @foreach (var inquilino in Model)
         {
             <tr>
-                <td>@Html.DisplayFor(model => Inquilino.IdInquilino)</td>
-                <td>@Html.DisplayFor(modelItem => Inquilino.Documento)</td>
-                <td>@Html.DisplayFor(modelItem => Inquilino.Nombre)</td>
-                <td>@Html.DisplayFor(modelItem => Inquilino.Apellido)</td>
-                <td>@Html.DisplayFor(modelItem => Inquilino.Telefono)</td>
-                <td>@Html.DisplayFor(modelItem => Inquilino.Mail)</td>
+                <td>@Html.DisplayFor(modelItem => inquilino.Documento)</td>
+                <td>@($"{inquilino.Apellido}, {inquilino.Nombre}")</td>
+                <td>@Html.DisplayFor(modelItem => inquilino.Telefono)</td>
+                <td>@Html.DisplayFor(modelItem => inquilino.Mail)</td>
                 <td>
                     <div class="btn-group" role="group">
-                        <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Inquilino.IdInquilino" title="Editar">
+                        <a class="btn btn-primary" asp-action="Edit" asp-route-id="@inquilino.IdInquilino" title="Editar">
                             Editar
                         </a>
-                      @if (User.IsInRole("Administrador"))
+                        @if (User.IsInRole("Administrador"))
                         {
-                            <a class="btn btn-danger" asp-action="Eliminar" asp-route-id="@Inquilino.IdInquilino" title="Eliminar">
+                            <a class="btn btn-danger" asp-action="Eliminar" asp-route-id="@inquilino.IdInquilino" title="Eliminar">
                                 Eliminar
                             </a>
-                        }                 
-                        <a class="btn btn-secondary" asp-controller="Contratos" asp-action="Index" asp-route-idInquilino="@Inquilino.IdInquilino" title="Mis Alquileres">
+                        }
+                        <a class="btn btn-secondary" asp-controller="Contratos" asp-action="Index" asp-route-idInquilino="@inquilino.IdInquilino" title="Mis Alquileres">
                             Mis Alquileres
                         </a>
                     </div>
@@ -54,3 +50,4 @@
         }
     </tbody>
 </table>
+

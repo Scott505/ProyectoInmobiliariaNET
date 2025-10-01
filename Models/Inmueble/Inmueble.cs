@@ -29,7 +29,7 @@ public class Inmueble
     [Display(Name = "Propietario")]
     public int IdPropietario { get; set; }
 
-    [Display(Name = "Disponibilidad")]
+    [Display(Name = "Disponible")]
     public bool Disponible { get; set; } = true;
 
     public string? PropietarioNombre { get; set; }

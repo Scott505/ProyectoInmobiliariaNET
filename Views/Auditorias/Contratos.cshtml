@@ -16,11 +16,11 @@ else
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Id Registro</th>
-                <th>Id Contrato</th>
-                <th>Id Usuario Creador</th>
+                <th>Registro</th>
+                <th>Numero de Contrato</th>
+                <th>Usuario Creador</th>
                 <th>Fecha Creación</th>
-                <th>Id Usuario Finalizador</th>
+                <th>Usuario Finalizador</th>
                 <th>Fecha Finalización</th>
             </tr>
         </thead>
@@ -30,10 +30,12 @@ else
                 <tr>
                     <td>@item.IdRegistro</td>
                     <td>@item.IdContrato</td>
-                    <td>@item.IdUsuarioCreador</td>
+                    <td>@item.NombreUsuarioCreador</td>
                     <td>@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
-                    <td>@(item.IdUsuarioFinalizador.HasValue ? item.IdUsuarioFinalizador.ToString() : "-")</td>
-                    <td>@(item.FechaFinalizacion.HasValue ? item.FechaFinalizacion.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                    <td>@(item.NombreUsuarioFinalizador ?? "-")</td>
+                    <td>@(item.FechaFinalizacion.HasValue 
+                        ? item.FechaFinalizacion.Value.ToString("dd/MM/yyyy HH:mm") 
+                        : "-")</td>
                 </tr>
             }
         </tbody>

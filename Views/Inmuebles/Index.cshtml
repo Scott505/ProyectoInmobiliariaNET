@@ -30,16 +30,14 @@
     </div>
 </form>
 
-<!-- TABLA -->
 <table class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.IdInmueble)</th>
             <th>@Html.DisplayNameFor(model => model.Direccion)</th>
             <th>@Html.DisplayNameFor(model => model.Tipo)</th>
             <th>@Html.DisplayNameFor(model => model.Uso)</th>
             <th>@Html.DisplayNameFor(model => model.Ambientes)</th>
-            <th>@Html.DisplayNameFor(model => model.IdPropietario)</th>
+            <th>Propietario</th>
             <th>@Html.DisplayNameFor(model => model.Disponible)</th>
             <th>Acciones</th>
         </tr>
@@ -48,7 +46,6 @@
         @foreach (var inmueble in Model)
         {
             <tr>
-                <td>@inmueble.IdInmueble</td>
                 <td>@inmueble.Direccion</td>
                 <td>@inmueble.Tipo</td>
                 <td>@inmueble.Uso</td>
@@ -58,7 +55,7 @@
                 <td>
                     <div class="btn-group">
                         <a class="btn btn-primary" asp-action="Edit" asp-route-id="@inmueble.IdInmueble">Editar</a>
-                      @if (User.IsInRole("Administrador"))
+                        @if (User.IsInRole("Administrador"))
                         {
                             <a class="btn btn-danger" asp-action="Eliminar" asp-route-id="@inmueble.IdInmueble" title="Eliminar">
                                 Eliminar

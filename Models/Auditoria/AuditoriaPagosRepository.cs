@@ -52,9 +52,13 @@ public class AuditoriaPagosRepository : RepositoryBase
     var lista = new List<AuditoriaPago>();
     using (var connection = new MySqlConnection(ConectionString))
     {
-        string sql = @"SELECT IdRegistro, IdPago, IdUsuarioCreador, FechaCreacion,
-                              IdUsuarioAnulador, FechaAnulacion
-                       FROM AuditoriaPagos";
+        string sql = @"SELECT a.IdRegistro, a.IdPago, a.IdUsuarioCreador, a.FechaCreacion,
+                              a.IdUsuarioAnulador, a.FechaAnulacion,
+                              u1.Nombre AS NombreUsuarioCreador,
+                              u2.Nombre AS NombreUsuarioAnulador
+                       FROM AuditoriaPagos a
+                       JOIN Usuarios u1 ON a.IdUsuarioCreador = u1.IdUsuario
+                       LEFT JOIN Usuarios u2 ON a.IdUsuarioAnulador = u2.IdUsuario;";
 
         using (var command = new MySqlCommand(sql, connection))
         {
@@ -71,7 +75,10 @@ public class AuditoriaPagosRepository : RepositoryBase
                     IdUsuarioAnulador = reader.IsDBNull(reader.GetOrdinal("IdUsuarioAnulador"))
                         ? null : reader.GetInt32("IdUsuarioAnulador"),
                     FechaAnulacion = reader.IsDBNull(reader.GetOrdinal("FechaAnulacion"))
-                        ? null : reader.GetDateTime("FechaAnulacion")
+                        ? null : reader.GetDateTime("FechaAnulacion"),
+                    NombreUsuarioCreador = reader.GetString("NombreUsuarioCreador"),
+                    NombreUsuarioAnulador = reader.IsDBNull(reader.GetOrdinal("NombreUsuarioAnulador"))
+                        ? null : reader.GetString("NombreUsuarioAnulador")
                 });
             }
         }

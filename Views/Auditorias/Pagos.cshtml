@@ -14,29 +14,31 @@
 }
 else
 {
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.IdRegistro)</th>
-            <th>@Html.DisplayNameFor(model => model.IdPago)</th>
-            <th>Usuario Creador</th>
-            <th>Fecha Creación</th>
-            <th>Usuario Anulador</th>
-            <th>Fecha Anulación</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
+    <table class="table table-striped">
+        <thead>
             <tr>
-                <td>@item.IdRegistro</td>
-                <td>@item.IdPago</td>
-                <td>@item.IdUsuarioCreador</td>
-                <td>@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
-                <td>@(item.IdUsuarioAnulador.HasValue ? item.IdUsuarioAnulador.ToString() : "-")</td>
-                <td>@(item.FechaAnulacion.HasValue ? item.FechaAnulacion.Value.ToString("dd/MM/yyyy HH:mm") : "-")</td>
+                <th>Registro</th>
+                <th>Número de Pago</th>
+                <th>Usuario Creador</th>
+                <th>Fecha Creación</th>
+                <th>Usuario Anulador</th>
+                <th>Fecha Anulación</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.IdRegistro</td>
+                    <td>@item.IdPago</td>
+                    <td>@item.NombreUsuarioCreador</td>
+                    <td>@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@(item.NombreUsuarioAnulador ?? "-")</td>
+                    <td>@(item.FechaAnulacion.HasValue 
+                        ? item.FechaAnulacion.Value.ToString("dd/MM/yyyy HH:mm") 
+                        : "-")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }

@@ -15,10 +15,8 @@
 <table class="table">
     <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.IdPropietario)</th>
             <th>@Html.DisplayNameFor(model => model.Documento)</th>
-            <th>@Html.DisplayNameFor(model => model.Nombre)</th>
-            <th>@Html.DisplayNameFor(model => model.Apellido)</th>
+            <th>Nombre del Propietario</th>
             <th>@Html.DisplayNameFor(model => model.Telefono)</th>
             <th>@Html.DisplayNameFor(model => model.Mail)</th>
             <th>Acciones</th>
@@ -28,10 +26,8 @@
         @foreach (var propietario in Model)
         {
             <tr>
-                <td>@Html.DisplayFor(model => propietario.IdPropietario)</td>
                 <td>@Html.DisplayFor(modelItem => propietario.Documento)</td>
-                <td>@Html.DisplayFor(modelItem => propietario.Nombre)</td>
-                <td>@Html.DisplayFor(modelItem => propietario.Apellido)</td>
+                <td>@($"{propietario.Apellido}, {propietario.Nombre}")</td>
                 <td>@Html.DisplayFor(modelItem => propietario.Telefono)</td>
                 <td>@Html.DisplayFor(modelItem => propietario.Mail)</td>
                 <td>
@@ -39,7 +35,7 @@
                         <a class="btn btn-primary" asp-action="Edit" asp-route-id="@propietario.IdPropietario" title="Editar">
                             Editar
                         </a>
-                       @if (User.IsInRole("Administrador"))
+                        @if (User.IsInRole("Administrador"))
                         {
                             <a class="btn btn-danger" asp-action="Eliminar" asp-route-id="@propietario.IdPropietario" title="Eliminar">
                                 Eliminar
