@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 27-09-2025 a las 04:19:12
+-- Tiempo de generación: 02-10-2025 a las 00:14:01
 -- Versión del servidor: 10.4.28-MariaDB
 -- Versión de PHP: 8.2.4
 
@@ -205,17 +205,18 @@ CREATE TABLE `usuarios` (
   `password` varchar(50) NOT NULL,
   `nombre` varchar(50) DEFAULT NULL,
   `rol` varchar(20) DEFAULT NULL,
-  `activo` tinyint(1) DEFAULT 1
+  `activo` tinyint(1) DEFAULT 1,
+  `avatar` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `usuarios`
 --
 
-INSERT INTO `usuarios` (`idUsuario`, `email`, `password`, `nombre`, `rol`, `activo`) VALUES
-(1, 'admin@correo.com', '12345678', 'Admin', 'Administrador', 1),
-(2, 'empleado@correo.com', '123456', 'Empleado 1', 'Empleado', 1),
-(4, 'juliam@gmail.com', '1234', 'Julia Murcia', 'Empleado', 1);
+INSERT INTO `usuarios` (`idUsuario`, `email`, `password`, `nombre`, `rol`, `activo`, `avatar`) VALUES
+(1, 'admin@correo.com', '12345678', 'Admin', 'Administrador', 1, NULL),
+(2, 'empleado@correo.com', '123456', 'Empleado 1', 'Empleado', 1, NULL),
+(4, 'juliam@gmail.com', '1234', 'Julia Murcia', 'Empleado', 1, NULL);
 
 --
 -- Índices para tablas volcadas
