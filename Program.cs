@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ExpireTimeSpan = TimeSpan.FromHours(4);
         options.SlidingExpiration = true;
         options.Cookie.Name = "NetAppAuth";
+        options.Events.OnRedirectToAccessDenied = async context =>
+        {
+            await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            context.Response.Redirect("/Home/Index");
+
+        };
     });
 
 // ----------------------------

@@ -39,6 +39,8 @@ public class PropietariosController : Controller
         return View(propietario);
     }
 
+    [Authorize(Policy = "AdminOnly")]
+
     public ActionResult Eliminar(int id)
     {
         var propietario = repository.ObtenerPorId(id);
@@ -51,6 +53,8 @@ public class PropietariosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+        [Authorize(Policy = "AdminOnly")]
+
     public ActionResult ConfirmarEliminacion(int IdPropietario)
     {
         repository.Baja(IdPropietario);

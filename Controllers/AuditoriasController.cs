@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using _Net.Models;
 using Microsoft.AspNetCore.Authorization;
 [Authorize]
+[Authorize(Policy = "AdminOnly")]
 public class AuditoriasController : Controller
 {
     private readonly IConfiguration config;

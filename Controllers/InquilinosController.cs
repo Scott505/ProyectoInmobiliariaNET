@@ -38,6 +38,8 @@ public class InquilinosController : Controller
         return View(inquilino);
     }
 
+    [Authorize(Policy = "AdminOnly")]
+
     public ActionResult Eliminar(int id)
     {
         var Inquilino = repository.ObtenerPorId(id);
@@ -50,6 +52,8 @@ public class InquilinosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "AdminOnly")]
+
     public ActionResult ConfirmarEliminacion(int IdInquilino)
     {
         repository.Baja(IdInquilino);
@@ -63,9 +67,9 @@ public class InquilinosController : Controller
         var Inquilino = repository.ObtenerPorId(id);
         if (Inquilino == null)
         {
-            return NotFound(); 
+            return NotFound();
         }
-        return View(Inquilino); 
+        return View(Inquilino);
     }
 
     // POST: Inquilinos/Edit/5

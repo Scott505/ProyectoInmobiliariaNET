@@ -88,6 +88,8 @@ public ActionResult Create(Contrato contrato)
     return View(contrato);
 }
 
+    [Authorize(Policy = "AdminOnly")]
+
     public ActionResult Eliminar(int id)
     {
         var contrato = repository.ObtenerPorId(id);
@@ -100,20 +102,21 @@ public ActionResult Create(Contrato contrato)
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "AdminOnly")]
     public ActionResult ConfirmarEliminacion(int IdContrato)
-{
-    repository.Baja(IdContrato); // Baja lógica: Vigente = false
+    {
+        repository.Baja(IdContrato); // Baja lógica: Vigente = false
 
-    // Registrar auditoría de finalización
-    int userId = HttpContext.Session.GetInt32("UsuarioId")
-                 ?? int.Parse(Request.Cookies["UsuarioId"]);
+        // Registrar auditoría de finalización
+        int userId = HttpContext.Session.GetInt32("UsuarioId")
+                     ?? int.Parse(Request.Cookies["UsuarioId"]);
 
-    var auditoriaRepo = new AuditoriasContratosRepository(config);
-    auditoriaRepo.FinalizarContrato(IdContrato, userId, DateTime.Now);
+        var auditoriaRepo = new AuditoriasContratosRepository(config);
+        auditoriaRepo.FinalizarContrato(IdContrato, userId, DateTime.Now);
 
-    TempData["Mensaje"] = "Contrato finalizado correctamente";
-    return RedirectToAction(nameof(Index));
-}
+        TempData["Mensaje"] = "Contrato finalizado correctamente";
+        return RedirectToAction(nameof(Index));
+    }
 
     public ActionResult Edit(int id)
     {

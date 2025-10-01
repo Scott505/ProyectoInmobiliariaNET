@@ -61,6 +61,8 @@ public class PagosController : Controller
     return View(pago);
 }
 
+    [Authorize(Policy = "AdminOnly")]
+
     public ActionResult Eliminar(int id)
     {
         var pago = repository.ObtenerPorId(id);
@@ -73,19 +75,21 @@ public class PagosController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+        [Authorize(Policy = "AdminOnly")]
+
     public ActionResult ConfirmarEliminacion(int IdPago)
-{
-    repository.Baja(IdPago); 
+    {
+        repository.Baja(IdPago);
 
-    int userId = HttpContext.Session.GetInt32("UsuarioId")
-                 ?? int.Parse(Request.Cookies["UsuarioId"]);
+        int userId = HttpContext.Session.GetInt32("UsuarioId")
+                     ?? int.Parse(Request.Cookies["UsuarioId"]);
 
-    var auditoriaRepo = new AuditoriaPagosRepository(config);
-    auditoriaRepo.RegistrarAnulacion(IdPago, userId);
+        var auditoriaRepo = new AuditoriaPagosRepository(config);
+        auditoriaRepo.RegistrarAnulacion(IdPago, userId);
 
-    TempData["Mensaje"] = "Pago anulado correctamente";
-    return RedirectToAction(nameof(Index));
-}
+        TempData["Mensaje"] = "Pago anulado correctamente";
+        return RedirectToAction(nameof(Index));
+    }
 
     public ActionResult Edit(int id)
     {

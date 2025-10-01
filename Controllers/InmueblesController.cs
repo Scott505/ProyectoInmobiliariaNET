@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
 
 namespace _Net.Controllers;
+
 [Authorize]
 public class InmueblesController : Controller
 {
@@ -18,14 +19,14 @@ public class InmueblesController : Controller
         this.config = config;
     }
 
-   public ActionResult Index(bool? disponible, int? idPropietario)
-{
-    var lista = repository.ObtenerTodosOPorFiltro(idPropietario, disponible);
+    public ActionResult Index(bool? disponible, int? idPropietario)
+    {
+        var lista = repository.ObtenerTodosOPorFiltro(idPropietario, disponible);
 
-    CargarPropietariosDropdown(idPropietario);
-    ViewBag.DisponibleSeleccionado = disponible;
+        CargarPropietariosDropdown(idPropietario);
+        ViewBag.DisponibleSeleccionado = disponible;
 
-    return View(lista);
+        return View(lista);
     }
     public ActionResult Create()
     {
@@ -48,6 +49,7 @@ public class InmueblesController : Controller
         return View(inmueble);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     public ActionResult Eliminar(int id)
     {
         var inmueble = repository.ObtenerPorId(id);
@@ -60,6 +62,8 @@ public class InmueblesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Policy = "AdminOnly")]
+
     public ActionResult ConfirmarEliminacion(int IdInmueble)
     {
         repository.Baja(IdInmueble); // lógica de baja lógica (Disponible = false)
@@ -114,14 +118,16 @@ public class InmueblesController : Controller
     }
 
     private void CargarPropietariosDropdown(int? propietarioSeleccionado = null)
-{
-    var propietarios = new PropietariosRepository(config).ObtenerTodos()
-        .Select(p => new
-        { Id = p.IdPropietario,
-            NombreCompleto = p.Nombre + " " + p.Apellido })
-        .ToList();
+    {
+        var propietarios = new PropietariosRepository(config).ObtenerTodos()
+            .Select(p => new
+            {
+                Id = p.IdPropietario,
+                NombreCompleto = p.Nombre + " " + p.Apellido
+            })
+            .ToList();
 
-    ViewBag.Propietarios = new SelectList(propietarios, "Id", "NombreCompleto", propietarioSeleccionado);
-}
+        ViewBag.Propietarios = new SelectList(propietarios, "Id", "NombreCompleto", propietarioSeleccionado);
+    }
 
 }
