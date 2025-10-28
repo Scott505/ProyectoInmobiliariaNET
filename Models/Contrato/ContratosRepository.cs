@@ -1,9 +1,10 @@
 using System.Data;
+using System.Text;
 using MySql.Data.MySqlClient;
 
 namespace _Net.Models;
 
-public class ContratosRepository : RepositoryBase
+public class ContratosRepository : RepositoryBase, IRepositoryContratos
 {
     public ContratosRepository(IConfiguration configuration) : base(configuration)
     {
@@ -50,31 +51,77 @@ public class ContratosRepository : RepositoryBase
         return contrato;
     }
 
-    public List<Contrato> ObtenerTodosOPorFiltros(int? dias = null, bool? vigente = null, int? idInquilino = null)
+    public IList<Contrato> ObtenerTodos()
+    {
+        IList<Contrato> contratos = new List<Contrato>();
+
+        using (var connection = new MySqlConnection(ConectionString))
+        {
+            string sql = @"
+                SELECT c.IdContrato, c.IdInquilino, c.IdInmueble, c.FechaInicio, c.FechaFin, 
+                    c.ValorMensual, c.Vigente,
+                    i.Nombre AS InquilinoNombre, i.Apellido AS InquilinoApellido,
+                    inm.Direccion AS InmuebleDireccion
+                FROM Contratos c
+                INNER JOIN Inquilinos i ON c.IdInquilino = i.IdInquilino
+                INNER JOIN Inmuebles inm ON c.IdInmueble = inm.IdInmueble
+            ";
+
+            using (var command = new MySqlCommand(sql, connection))
+            {
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        contratos.Add(new Contrato
+                        {
+                            IdContrato = reader.GetInt32("IdContrato"),
+                            IdInquilino = reader.GetInt32("IdInquilino"),
+                            IdInmueble = reader.GetInt32("IdInmueble"),
+                            FechaInicio = reader.GetDateTime("FechaInicio"),
+                            FechaFin = reader.GetDateTime("FechaFin"),
+                            ValorMensual = reader.GetDouble("ValorMensual"),
+                            Vigente = reader.GetBoolean("Vigente"),
+                            InquilinoNombre = reader.GetString("InquilinoNombre"),
+                            InquilinoApellido = reader.GetString("InquilinoApellido"),
+                            InmuebleDireccion = reader.GetString("InmuebleDireccion")
+                        });
+                    }
+                }
+                connection.Close();
+            }
+        }
+
+        return contratos;
+    }
+
+    public IList<Contrato> ObtenerTodosOPorFiltros(int? dias = null, bool? vigente = null, int? idInquilino = null)
     {
         List<Contrato> contratos = new List<Contrato>();
         using (var connection = new MySqlConnection(ConectionString))
         {
-            string sql = @"
-        SELECT c.IdContrato, c.IdInquilino, c.IdInmueble, c.FechaInicio, c.FechaFin, 
-               c.ValorMensual, c.Vigente,
-               i.Nombre AS InquilinoNombre, i.Apellido AS InquilinoApellido,
-               inm.Direccion AS InmuebleDireccion
-        FROM Contratos c
-        INNER JOIN Inquilinos i ON c.IdInquilino = i.IdInquilino
-        INNER JOIN Inmuebles inm ON c.IdInmueble = inm.IdInmueble
-        WHERE 1=1";
+            var sql = new StringBuilder(@"
+                SELECT c.IdContrato, c.IdInquilino, c.IdInmueble, c.FechaInicio, c.FechaFin, 
+                    c.ValorMensual, c.Vigente,
+                    i.Nombre AS InquilinoNombre, i.Apellido AS InquilinoApellido,
+                    inm.Direccion AS InmuebleDireccion
+                FROM Contratos c
+                INNER JOIN Inquilinos i ON c.IdInquilino = i.IdInquilino
+                INNER JOIN Inmuebles inm ON c.IdInmueble = inm.IdInmueble
+                WHERE 1=1
+            ");
 
             if (dias.HasValue)
-                sql += " AND DATEDIFF(c.FechaFin, CURDATE()) <= @dias";
+                sql.Append(" AND DATEDIFF(c.FechaFin, CURDATE()) <= @dias");
 
             if (vigente.HasValue)
-                sql += " AND c.Vigente = @vigente";
+                sql.Append(" AND c.Vigente = @vigente");
 
             if (idInquilino.HasValue)
-                sql += " AND c.IdInquilino = @idInquilino";
+                sql.Append(" AND c.IdInquilino = @idInquilino");
 
-            using (var command = new MySqlCommand(sql, connection))
+            using (var command = new MySqlCommand(sql.ToString(), connection))
             {
                 if (dias.HasValue)
                     command.Parameters.AddWithValue("@dias", dias.Value);
@@ -198,39 +245,39 @@ public class ContratosRepository : RepositoryBase
         }
         return res;
     }
+
     public bool ExisteSuperposicion(int idInmueble, DateTime fechaInicio, DateTime fechaFin, int? idContratoExcluir = null)
-{
-    bool existe = false;
-
-    using (var connection = new MySqlConnection(ConectionString))
     {
-        string sql = $@"
-            SELECT COUNT(*) 
-            FROM Contratos 
-            WHERE IdInmueble = @IdInmueble 
-              AND Vigente = true
-              AND (@FechaInicio <= FechaFin AND @FechaFin >= FechaInicio)";
+        bool existe = false;
 
-        // Excluir el contrato actual en caso de edición
-        if (idContratoExcluir.HasValue)
-            sql += " AND IdContrato <> @IdContrato";
-
-        using (var command = new MySqlCommand(sql, connection))
+        using (var connection = new MySqlConnection(ConectionString))
         {
-            command.Parameters.AddWithValue("@IdInmueble", idInmueble);
-            command.Parameters.AddWithValue("@FechaInicio", fechaInicio);
-            command.Parameters.AddWithValue("@FechaFin", fechaFin);
+            string sql = $@"
+                SELECT COUNT(*) 
+                FROM Contratos 
+                WHERE IdInmueble = @IdInmueble 
+                AND Vigente = true
+                AND (@FechaInicio <= FechaFin AND @FechaFin >= FechaInicio)";
 
+            // Excluir el contrato actual en caso de edición
             if (idContratoExcluir.HasValue)
-                command.Parameters.AddWithValue("@IdContrato", idContratoExcluir.Value);
+                sql += " AND IdContrato <> @IdContrato";
 
-            connection.Open();
-            existe = Convert.ToInt32(command.ExecuteScalar()) > 0;
-            connection.Close();
+            using (var command = new MySqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("@IdInmueble", idInmueble);
+                command.Parameters.AddWithValue("@FechaInicio", fechaInicio);
+                command.Parameters.AddWithValue("@FechaFin", fechaFin);
+
+                if (idContratoExcluir.HasValue)
+                    command.Parameters.AddWithValue("@IdContrato", idContratoExcluir.Value);
+
+                connection.Open();
+                existe = Convert.ToInt32(command.ExecuteScalar()) > 0;
+                connection.Close();
+            }
         }
+
+        return existe;
     }
-
-    return existe;
-}
-
 }

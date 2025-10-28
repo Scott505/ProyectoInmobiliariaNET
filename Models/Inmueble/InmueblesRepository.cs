@@ -3,7 +3,7 @@ using MySql.Data.MySqlClient;
 
 namespace _Net.Models;
 
-public class InmueblesRepository : RepositoryBase
+public class InmueblesRepository : RepositoryBase, IRepositoryInmuebles
 {
     public InmueblesRepository(IConfiguration configuration) : base(configuration) { }
 
@@ -52,7 +52,7 @@ public class InmueblesRepository : RepositoryBase
         return inmueble;
     }
 
-    public List<Inmueble> ObtenerTodos()
+    public IList<Inmueble> ObtenerTodos()
     {
         List<Inmueble> inmuebles = new List<Inmueble>();
         using (var connection = new MySqlConnection(ConectionString))
@@ -194,7 +194,7 @@ public class InmueblesRepository : RepositoryBase
     }
 
 
-    public List<Inmueble> ObtenerTodosOPorFiltro(int? idPropietario = null, bool? disponible = null)
+    public IList<Inmueble> ObtenerTodosOPorFiltro(int? idPropietario = null, bool? disponible = null)
     {
         var lista = new List<Inmueble>();
 
@@ -250,7 +250,7 @@ public class InmueblesRepository : RepositoryBase
 
         return lista;
     }
-    public List<Inmueble> ObtenerDisponiblesEntreFechas(DateTime fechaInicio, DateTime fechaFin)
+    public IList<Inmueble> ObtenerDisponiblesEntreFechas(DateTime fechaInicio, DateTime fechaFin)
 {
     var disponibles = new List<Inmueble>();
 

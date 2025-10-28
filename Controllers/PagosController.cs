@@ -8,18 +8,26 @@ namespace _Net.Controllers;
 [Authorize]
 public class PagosController : Controller
 {
-    private readonly PagosRepository repository;
+    private readonly IRepositoryPagos repository;
     private readonly IConfiguration config;
 
-    public PagosController(IConfiguration config)
+    public PagosController(IRepositoryPagos repo, IConfiguration config)
     {
-        this.repository = new PagosRepository(config);
+        this.repository = repo;
         this.config = config;
     }
 
     public ActionResult Index(int? idContrato)
     {
-        var lista = repository.ObtenerTodosOPorFiltro(idContrato);
+        IList<Pago> lista;
+        if (idContrato.HasValue)
+        {
+            lista = repository.ObtenerPorContrato(idContrato: idContrato.Value);
+        }
+        else
+        {
+            lista = repository.ObtenerTodos();
+        }
 
         var contratos = new ContratosRepository(config).ObtenerTodosOPorFiltros();
         ViewBag.Contratos = new SelectList(contratos, "IdContrato", "IdContrato", idContrato);

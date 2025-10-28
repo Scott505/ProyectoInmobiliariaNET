@@ -7,12 +7,12 @@ namespace _Net.Controllers;
 [Authorize]
 public class PropietariosController : Controller
 {
-    private readonly PropietariosRepository repository;
+    private readonly IRepositoryPropietario repository;
     private readonly IConfiguration config;
 
-    public PropietariosController(IConfiguration config)
+    public PropietariosController(IRepositoryPropietario repo, IConfiguration config)
     {
-        this.repository = new PropietariosRepository(config);
+        this.repository = repo;
         this.config = config;
     }
 

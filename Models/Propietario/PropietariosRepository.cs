@@ -3,7 +3,7 @@ using MySql.Data.MySqlClient;
 
 namespace _Net.Models;
 
-public class PropietariosRepository : RepositoryBase
+public class PropietariosRepository : RepositoryBase, IRepositoryPropietario
 {
     public PropietariosRepository(IConfiguration configuration) : base(configuration)
     {
@@ -51,7 +51,7 @@ public class PropietariosRepository : RepositoryBase
         return propietario;
     }
 
-    public List<Propietario> ObtenerTodos()
+    public IList<Propietario> ObtenerTodos()
     {
         List<Propietario> propietarios = new List<Propietario>();
 
@@ -175,9 +175,6 @@ public class PropietariosRepository : RepositoryBase
         }
         return res;
     }
-
-
-
 }
 
 

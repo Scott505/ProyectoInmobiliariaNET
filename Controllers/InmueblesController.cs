@@ -8,14 +8,14 @@ namespace _Net.Controllers;
 [Authorize]
 public class InmueblesController : Controller
 {
-    private readonly InmueblesRepository repository;
+    private readonly IRepositoryInmuebles repository;
     private readonly IConfiguration config;
     public enum TipoInmueble { CASA, DEPARTAMENTO, LOCAL, DEPOSITO }
     public enum UsoInmueble { RESIENCIAL, COMERCIAL }
 
-    public InmueblesController(IConfiguration config)
+    public InmueblesController(IRepositoryInmuebles repo, IConfiguration config)
     {
-        this.repository = new InmueblesRepository(config);
+        this.repository = repo;
         this.config = config;
     }
 
@@ -28,6 +28,7 @@ public class InmueblesController : Controller
 
         return View(lista);
     }
+    
     public ActionResult Create()
     {
         CargarDropdowns();
@@ -63,7 +64,6 @@ public class InmueblesController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "AdminOnly")]
-
     public ActionResult ConfirmarEliminacion(int IdInmueble)
     {
         repository.Baja(IdInmueble); // lógica de baja lógica (Disponible = false)

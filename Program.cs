@@ -1,11 +1,16 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
-
+using _Net.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IRepositoryPropietario, PropietariosRepository>();
+builder.Services.AddScoped<IRepositoryPagos, PagosRepository>();
+builder.Services.AddScoped<IRepositoryInmuebles, InmueblesRepository>();
+builder.Services.AddScoped<IRepositoryContratos, ContratosRepository>();
+builder.Services.AddScoped<IRepositoryInquilinos, InquilinosRepository>();
 
 // ----------------------------
 // Sessions

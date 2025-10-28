@@ -3,7 +3,7 @@ using MySql.Data.MySqlClient;
 
 namespace _Net.Models;
 
-public class PagosRepository : RepositoryBase
+public class PagosRepository : RepositoryBase, IRepositoryPagos
 {
     public PagosRepository(IConfiguration configuration) : base(configuration)
     {
@@ -48,52 +48,86 @@ public class PagosRepository : RepositoryBase
         return pago;
     }
 
-    public List<Pago> ObtenerTodosOPorFiltro(int? idContrato = null)
-{
-    List<Pago> pagos = new List<Pago>();
-    using (var connection = new MySqlConnection(ConectionString))
+    public IList<Pago> ObtenerTodos()
     {
-        string sql = $@"SELECT {nameof(Pago.IdPago)},
-                               {nameof(Pago.IdContrato)},
-                               {nameof(Pago.concepto)},
-                               {nameof(Pago.importe)},
-                               {nameof(Pago.Fecha)},
-                               {nameof(Pago.anulado)}
-                        FROM Pagos";
+        List<Pago> pagos = new List<Pago>();
 
-        if (idContrato.HasValue)
+        using (var connection = new MySqlConnection(ConectionString))
         {
-            sql += " WHERE IdContrato = @IdContrato";
-        }
+            string sql = $@"
+                SELECT {nameof(Pago.IdPago)},
+                    {nameof(Pago.IdContrato)},
+                    {nameof(Pago.concepto)},
+                    {nameof(Pago.importe)},
+                    {nameof(Pago.Fecha)},
+                    {nameof(Pago.anulado)}
+                FROM Pagos";
 
-        using (var command = new MySqlCommand(sql, connection))
-        {
-            if (idContrato.HasValue)
+            using (var command = new MySqlCommand(sql, connection))
             {
-                command.Parameters.AddWithValue("@IdContrato", idContrato.Value);
-            }
-
-            connection.Open();
-            using (var reader = command.ExecuteReader())
-            {
-                while (reader.Read())
+                connection.Open();
+                using (var reader = command.ExecuteReader())
                 {
-                    pagos.Add(new Pago
+                    while (reader.Read())
                     {
-                        IdPago = reader.GetInt32(nameof(Pago.IdPago)),
-                        IdContrato = reader.GetInt32(nameof(Pago.IdContrato)),
-                        concepto = reader.GetString(nameof(Pago.concepto)),
-                        importe = reader.GetDouble(nameof(Pago.importe)),
-                        Fecha = reader.GetDateTime(nameof(Pago.Fecha)),
-                        anulado = reader.GetBoolean(nameof(Pago.anulado))
-                    });
+                        pagos.Add(new Pago
+                        {
+                            IdPago = reader.GetInt32(nameof(Pago.IdPago)),
+                            IdContrato = reader.GetInt32(nameof(Pago.IdContrato)),
+                            concepto = reader.GetString(nameof(Pago.concepto)),
+                            importe = reader.GetDouble(nameof(Pago.importe)),
+                            Fecha = reader.GetDateTime(nameof(Pago.Fecha)),
+                            anulado = reader.GetBoolean(nameof(Pago.anulado))
+                        });
+                    }
                 }
+                connection.Close();
             }
-            connection.Close();
         }
+        return pagos;
     }
-    return pagos;
-}
+
+    public IList<Pago> ObtenerPorContrato(int idContrato)
+    {
+        List<Pago> pagos = new List<Pago>();
+
+        using (var connection = new MySqlConnection(ConectionString))
+        {
+            string sql = $@"
+                SELECT {nameof(Pago.IdPago)},
+                    {nameof(Pago.IdContrato)},
+                    {nameof(Pago.concepto)},
+                    {nameof(Pago.importe)},
+                    {nameof(Pago.Fecha)},
+                    {nameof(Pago.anulado)}
+                FROM Pagos
+                WHERE IdContrato = @IdContrato";
+
+            using (var command = new MySqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("@IdContrato", idContrato);
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        pagos.Add(new Pago
+                        {
+                            IdPago = reader.GetInt32(nameof(Pago.IdPago)),
+                            IdContrato = reader.GetInt32(nameof(Pago.IdContrato)),
+                            concepto = reader.GetString(nameof(Pago.concepto)),
+                            importe = reader.GetDouble(nameof(Pago.importe)),
+                            Fecha = reader.GetDateTime(nameof(Pago.Fecha)),
+                            anulado = reader.GetBoolean(nameof(Pago.anulado))
+                        });
+                    }
+                }
+                connection.Close();
+            }
+        }
+        return pagos;
+    }
 
 
     public int Alta(Pago pago)

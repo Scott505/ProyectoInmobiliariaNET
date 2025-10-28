@@ -3,7 +3,7 @@ using MySql.Data.MySqlClient;
 
 namespace _Net.Models;
 
-public class InquilinosRepository : RepositoryBase
+public class InquilinosRepository : RepositoryBase, IRepositoryInquilinos
 {
     public InquilinosRepository(IConfiguration configuration) : base(configuration)
     {
@@ -51,7 +51,7 @@ public class InquilinosRepository : RepositoryBase
         return Inquilino;
     }
 
-    public List<Inquilino> ObtenerTodos()
+    public IList<Inquilino> ObtenerTodos()
     {
         List<Inquilino> Inquilinos = new List<Inquilino>();
 

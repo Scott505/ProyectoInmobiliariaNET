@@ -6,12 +6,12 @@ namespace _Net.Controllers;
 [Authorize]
 public class InquilinosController : Controller
 {
-    private readonly InquilinosRepository repository;
+    private readonly IRepositoryInquilinos repository;
     private readonly IConfiguration config;
 
-    public InquilinosController(IConfiguration config)
+    public InquilinosController(IRepositoryInquilinos repo,IConfiguration config)
     {
-        this.repository = new InquilinosRepository(config);
+        this.repository = repo;
         this.config = config;
     }
 
